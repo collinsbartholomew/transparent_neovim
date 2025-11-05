@@ -1,0 +1,4 @@
+[formatting]
+indent_type = "tab"
+indent_tables = true
+align_entries = true
