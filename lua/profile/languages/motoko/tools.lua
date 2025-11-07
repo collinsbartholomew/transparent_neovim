@@ -32,6 +32,22 @@ local function run_mops(subcommand, fargs, title, fallback)
 end
 
 function M.setup()
+  -- Check for required tools
+  if vim.fn.executable("moc") == 0 then
+    vim.notify("moc compiler not found. Install dfx SDK from https://sdk.dfinity.org/", vim.log.levels.WARN)
+    return
+  end
+  
+  if vim.fn.executable("mo-fmt") == 0 then
+    vim.notify("mo-fmt not found. Install via npm: npm install -g @dfinity/mo-docs", vim.log.levels.WARN)
+    return
+  end
+  
+  if vim.fn.executable("mops") == 0 then
+    vim.notify("mops not found. Install from https://mops.one", vim.log.levels.WARN)
+    return
+  end
+  
   local conform_ok, conform = pcall(require, "conform")
   if conform_ok then
     conform.formatters.mo_fmt = {

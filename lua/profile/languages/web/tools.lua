@@ -5,6 +5,11 @@
 local M = {}
 
 function M.setup()
+    if vim.fn.executable("npm") == 0 and vim.fn.executable("yarn") == 0 and vim.fn.executable("pnpm") == 0 then
+        vim.notify("No package manager found. Install npm, yarn, or pnpm.", vim.log.levels.WARN)
+        return
+    end
+    
 	-- NpmInstall command
 	vim.api.nvim_create_user_command("NpmInstall", function()
 		vim.cmd("belowright new | terminal npm install")

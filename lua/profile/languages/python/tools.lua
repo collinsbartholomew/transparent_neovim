@@ -26,6 +26,16 @@ on_stdout = function(_, data)
 end
 
 function M.setup()
+    if vim.fn.executable("python") == 0 and vim.fn.executable("python3") == 0 then
+        vim.notify("Python not found in PATH. Install from https://www.python.org/downloads/", vim.log.levels.WARN)
+        return
+    end
+    
+    -- Check for virtual environment tools
+    if vim.fn.executable("pip") == 0 and vim.fn.executable("pip3") == 0 then
+        vim.notify("pip not found. Consider installing python3-pip package.", vim.log.levels.WARN)
+    end
+    
     -- Conform.nvim for formatting
     local conform_ok, conform = pcall(require, "conform")
     if conform_ok then

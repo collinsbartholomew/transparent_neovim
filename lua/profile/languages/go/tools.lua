@@ -26,6 +26,11 @@ local function run_in_term(cmd, title)
 end
 
 function M.setup()
+    if vim.fn.executable("go") == 0 then
+        vim.notify("Go not found in PATH. Install from https://golang.org/dl/", vim.log.levels.WARN)
+        return
+    end
+    
     -- Conform.nvim for formatting
     -- Using centralized conform.lua configuration
     

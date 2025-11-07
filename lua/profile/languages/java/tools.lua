@@ -26,6 +26,11 @@ end
 
 function M.setup(config)
     config = config or {}
+    
+    if vim.fn.executable("java") == 0 then
+        vim.notify("Java not found in PATH. Install JDK from https://adoptium.net/", vim.log.levels.WARN)
+        return
+    end
 
     -- Java Format command
     vim.api.nvim_create_user_command('JavaFormat', function()

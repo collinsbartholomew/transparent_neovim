@@ -23,6 +23,11 @@ local function run_in_term(cmd, title)
 end
 
 function M.setup()
+    if vim.fn.executable("mojo") == 0 then
+        vim.notify("Mojo not found in PATH. Install from https://docs.modular.com/mojo/", vim.log.levels.WARN)
+        return
+    end
+    
     -- Conform.nvim for formatting
     local conform_ok, conform = pcall(require, "conform")
     if conform_ok then

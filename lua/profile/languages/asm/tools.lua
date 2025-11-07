@@ -37,6 +37,7 @@ function M.setup()
             args = { "-X", "gnu", "-f", "elf64", "-o", "/dev/null", "-" },
             stdin = true,
             stream = "stderr",
+            condition = { executable = "nasm" },
             parser = function(output, bufnr)
                 local diagnostics = {}
                 for _, line in ipairs(vim.split(output, "\n")) do

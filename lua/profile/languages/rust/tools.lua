@@ -1,6 +1,11 @@
 local M = {}
 
 function M.setup()
+    if vim.fn.executable("cargo") == 0 then
+        vim.notify("Cargo not found in PATH. Install Rust from https://www.rust-lang.org/tools/install", vim.log.levels.WARN)
+        return
+    end
+    
 	local function run_in_term(cmd, title)
 		vim.cmd("botright new")
 		local buf = vim.api.nvim_get_current_buf()

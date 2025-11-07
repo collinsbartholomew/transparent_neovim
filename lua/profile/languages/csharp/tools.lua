@@ -25,6 +25,11 @@ local function run_in_term(cmd, title)
 end
 
 function M.setup()
+    if vim.fn.executable("dotnet") == 0 then
+        vim.notify("dotnet SDK not found. Install from https://dotnet.microsoft.com/download", vim.log.levels.WARN)
+        return
+    end
+    
     -- Setup user commands
     vim.api.nvim_create_user_command('DotnetBuild', function(opts)
         local args = opts.args or ""

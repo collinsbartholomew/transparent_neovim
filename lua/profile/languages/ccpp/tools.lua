@@ -52,6 +52,10 @@ function M.setup()
 
     -- Run clang-tidy on current file
     vim.api.nvim_create_user_command("ClangTidy", function()
+        if vim.fn.executable("clang-tidy") == 0 then
+            vim.notify("clang-tidy not found. Install via Mason or system package manager.", vim.log.levels.WARN)
+            return
+        end
         local file = vim.fn.expand("%:p")
         run_in_term(
                 { "sh", "-c", string.format("clang-tidy -p=./ %s", file) },

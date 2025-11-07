@@ -25,6 +25,11 @@ local function run_in_term(cmd, title)
 end
 
 function M.setup()
+    if vim.fn.executable("zig") == 0 then
+        vim.notify("Zig not found in PATH. Install from https://ziglang.org/download/", vim.log.levels.WARN)
+        return
+    end
+    
     -- Create user commands for Zig operations
     vim.api.nvim_create_user_command('ZigBuild', function(opts)
         local args = opts.args or ""
