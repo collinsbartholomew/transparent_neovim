@@ -1,14 +1,13 @@
+-- lua/profile/cmp.lua
 local M = {}
 local cmp_enabled = true
-
 local function safe_require(name)
     local ok, mod = pcall(require, name)
     return ok and mod or nil
 end
-
 -- Helper: has non-whitespace character before cursor
 local function has_words_before()
-    local col = vim.fn.col('.') - 1
+    local col = vim.fn.col(".") - 1
     if col == 0 then
         return false
     end
@@ -16,14 +15,12 @@ local function has_words_before()
     local char = line:sub(col, col)
     return not char:match("%s")
 end
-
 function M.setup()
     local cmp = safe_require("cmp")
     if not cmp then
         vim.notify("nvim-cmp not available", vim.log.levels.WARN)
         return
     end
-
     local luasnip = safe_require("luasnip")
     if not luasnip then
         vim.notify("luasnip not available; snippet support will be disabled", vim.log.levels.WARN)
@@ -32,25 +29,40 @@ function M.setup()
         if loader then
             loader.lazy_load()
         end
-
         -- sensible extension for react/tsx
         pcall(function()
             luasnip.filetype_extend("javascriptreact", { "javascript", "html" })
             luasnip.filetype_extend("typescriptreact", { "typescript", "javascript", "html" })
         end)
     end
-
     -- icons & source labels (keep short)
     local kind_icons = {
-        Text = "", Method = "", Function = "", Constructor = "",
-        Field = "", Variable = "", Class = "", Interface = "",
-        Module = "", Property = "", Unit = "", Value = "",
-        Enum = "", Keyword = "", Snippet = "", Color = "",
-        File = "", Reference = "", Folder = "", EnumMember = "",
-        Constant = "", Struct = "", Event = "", Operator = "",
+        Text = "",
+        Method = "",
+        Function = "",
+        Constructor = "",
+        Field = "",
+        Variable = "",
+        Class = "",
+        Interface = "",
+        Module = "",
+        Property = "",
+        Unit = "",
+        Value = "",
+        Enum = "",
+        Keyword = "",
+        Snippet = "",
+        Color = "",
+        File = "",
+        Reference = "",
+        Folder = "",
+        EnumMember = "",
+        Constant = "",
+        Struct = "",
+        Event = "",
+        Operator = "",
         TypeParameter = "",
     }
-
     local source_names = {
         nvim_lsp = "LSP",
         luasnip = "Snp",
@@ -60,7 +72,6 @@ function M.setup()
         crates = "Crate",
         git = "Git",
     }
-
     -- sensible default sources (we keep a file-size aware buffer filter)
     local function buffer_source_opts(max_size)
         return {
@@ -90,16 +101,13 @@ function M.setup()
             },
         }
     end
-
     -- main cmp.setup
     cmp.setup({
         enabled = function()
             return cmp_enabled
         end,
-
         -- single canonical completion options
         completion = { completeopt = "menu,menuone,noinsert,noselect", keyword_length = 1 },
-
         snippet = {
             expand = function(args)
                 if luasnip then
@@ -107,7 +115,6 @@ function M.setup()
                 end
             end,
         },
-
         performance = {
             debounce = 30,
             throttle = 20,
@@ -116,15 +123,12 @@ function M.setup()
             async_budget = 2,
             max_chunk_size = 1000,
         },
-
         experimental = {
             ghost_text = { hl_group = "CmpGhostText" },
         },
-
         view = {
             entries = { name = "custom", selection_order = "near_cursor" },
         },
-
         window = {
             completion = cmp.config.window.bordered({
                 winhighlight = "Normal:CmpNormal,FloatBorder:CmpBorder,CursorLine:CmpCursorLine",
@@ -137,30 +141,25 @@ function M.setup()
                 max_height = 15,
             }),
         },
-
         formatting = {
             fields = { "abbr", "kind", "menu" },
             format = function(entry, item)
                 local kind = item.kind or "Text"
                 item.kind = (kind_icons[kind] or "●") .. " " .. kind
                 item.kind_hl_group = "CmpItemKind" .. kind
-
                 local sname = entry.source and entry.source.name or ""
                 item.menu = source_names[sname] or ("[" .. sname .. "]")
-
                 if #item.abbr > 48 then
                     item.abbr = item.abbr:sub(1, 45) .. "…"
                 end
                 return item
             end,
         },
-
         mapping = cmp.mapping.preset.insert({
             ["<C-b>"] = cmp.mapping.scroll_docs(-4),
             ["<C-f>"] = cmp.mapping.scroll_docs(4),
             ["<C-Space>"] = cmp.mapping.complete(),
             ["<C-e>"] = cmp.mapping.abort(),
-
             ["<CR>"] = cmp.mapping(function(fallback)
                 if cmp.visible() and cmp.get_selected_entry() then
                     cmp.confirm({ behavior = cmp.ConfirmBehavior.Replace, select = false })
@@ -168,11 +167,10 @@ function M.setup()
                     fallback()
                 end
             end, { "i", "s" }),
-
             ["<Tab>"] = cmp.mapping(function(fallback)
                 if cmp.visible() then
                     cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert })
-                elseif luasnip and luasnip.expand_or_locally_jumpable and luasnip.expand_or_locally_jumpable() then
+                elseif luasnip and luasnip.expand_or_locally_jumpable() then
                     luasnip.expand_or_jump()
                 elseif has_words_before() then
                     cmp.complete()
@@ -185,18 +183,16 @@ function M.setup()
                     fallback()
                 end
             end, { "i", "s" }),
-
             ["<S-Tab>"] = cmp.mapping(function(fallback)
                 if cmp.visible() then
                     cmp.select_prev_item()
-                elseif luasnip and luasnip.jumpable and luasnip.jumpable(-1) then
+                elseif luasnip and luasnip.jumpable(-1) then
                     luasnip.jump(-1)
                 else
                     fallback()
                 end
             end, { "i", "s" }),
         }),
-
         sorting = {
             priority_weight = 2,
             comparators = {
@@ -211,7 +207,6 @@ function M.setup()
                 cmp.config.compare.order,
             },
         },
-
         -- single canonical sources block (we'll override per-filetype below)
         sources = (function()
             local max_size = 1024 * 1024 -- 1MB
@@ -220,7 +215,6 @@ function M.setup()
             if ok and stat and stat.size then
                 file_size = stat.size
             end
-
             if file_size and file_size > max_size then
                 -- large file: prioritize LSP and path to avoid heavy buffer scanning
                 return cmp.config.sources({
@@ -228,7 +222,6 @@ function M.setup()
                     { name = "path", priority = 800, max_item_count = 5 },
                 })
             end
-
             return cmp.config.sources({
                 { name = "nvim_lsp", priority = 1000, max_item_count = 20, keyword_length = 3 },
                 { name = "luasnip", priority = 900, max_item_count = 10 },
@@ -237,7 +230,6 @@ function M.setup()
             })
         end)(),
     })
-
     -- cmdline setups
     cmp.setup.cmdline(":", {
         mapping = cmp.mapping.preset.cmdline(),
@@ -247,14 +239,12 @@ function M.setup()
             { name = "cmdline", keyword_length = 2 },
         }),
     })
-
     cmp.setup.cmdline({ "/", "?" }, {
         mapping = cmp.mapping.preset.cmdline(),
         sources = {
             { name = "buffer" },
         },
     })
-
     -- filetype-specific tweaks
     if safe_require("crates") then
         cmp.setup.filetype({ "rust", "toml" }, {
@@ -267,7 +257,6 @@ function M.setup()
             }),
         })
     end
-
     cmp.setup.filetype("python", {
         sources = cmp.config.sources({
             { name = "nvim_lsp" },
@@ -277,7 +266,6 @@ function M.setup()
             { name = "buffer", keyword_length = 4 },
         }),
     })
-
     cmp.setup.filetype("motoko", {
         sources = cmp.config.sources({
             { name = "nvim_lsp" },
@@ -287,7 +275,6 @@ function M.setup()
             { name = "buffer", keyword_length = 2 },
         }),
     })
-
     -- git commit
     if safe_require("cmp_git") then
         safe_require("cmp_git").setup()
@@ -301,7 +288,6 @@ function M.setup()
     else
         cmp.setup.filetype("gitcommit", { sources = { { name = "buffer" } } })
     end
-
     -- crates on demand (also via autocmd to avoid forcing load)
     vim.api.nvim_create_autocmd("FileType", {
         pattern = { "rust", "toml" },
@@ -311,7 +297,6 @@ function M.setup()
             end
         end,
     })
-
     -- auto-import edits on confirm (apply additionalTextEdits from LSP completions)
     cmp.event:on("confirm_done", function(event)
         local entry = event.entry
@@ -325,37 +310,20 @@ function M.setup()
             end
         end
     end)
-
-    -- per-project .cmp.lua loader: load safely if exists in cwd
-    vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
-        callback = function()
-            local path = vim.fn.getcwd() .. "/.cmp.lua"
-            local stat = vim.loop.fs_stat(path)
-            if stat and stat.type == "file" then
-                local ok, res = pcall(loadfile, path)
-                if not ok then
-                    vim.notify("Error loading project cmp config: " .. tostring(res), vim.log.levels.WARN)
-                else
-                    pcall(res) -- run the returned chunk (it's expected to call cmp.setup or similar)
-                end
-            end
-        end,
-    })
-
     -- Commands
     vim.api.nvim_create_user_command("CmpStatus", function()
         local status = {
             enabled = cmp_enabled,
             active_buf = vim.api.nvim_get_current_buf(),
-            sources = vim.tbl_map(function(s) return s.name end, cmp.get_config().sources or {}),
+            sources = vim.tbl_map(function(s)
+                return s.name
+            end, cmp.get_config().sources or {}),
         }
         print(vim.inspect(status))
     end, { desc = "Show basic cmp status" })
-
     vim.api.nvim_create_user_command("CmpToggle", function()
         cmp_enabled = not cmp_enabled
         vim.notify("cmp " .. (cmp_enabled and "enabled" or "disabled"), vim.log.levels.INFO)
     end, { desc = "Toggle nvim-cmp" })
 end
-
 return M

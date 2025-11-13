@@ -1,3 +1,4 @@
+-- lua/profile/dap.lua
 -- Centralized DAP adapter configurations
 local M = {}
 
@@ -7,7 +8,6 @@ function M.setup()
         vim.notify("nvim-dap not available", vim.log.levels.WARN)
         return
     end
-
     -- Codelldb (C/C++/Rust)
     if vim.fn.executable("codelldb") == 1 then
         dap.adapters.codelldb = {
@@ -19,19 +19,17 @@ function M.setup()
             },
         }
     end
-
     -- Python (debugpy)
-    if vim.fn.executable("debugpy") == 1 then
+    if vim.fn.executable("python") == 1 then
         dap.adapters.python = {
             type = "executable",
-            command = "debugpy",
+            command = "python",
             args = { "-m", "debugpy.adapter" },
         }
     end
-
     -- Go (delve)
     if vim.fn.executable("dlv") == 1 then
-        dap.adapters.delve = {
+        dap.adapters.go = {
             type = "server",
             port = "${port}",
             executable = {
@@ -40,25 +38,38 @@ function M.setup()
             },
         }
     end
-
-    -- Node.js
-    if vim.fn.executable("node") == 1 then
-        dap.adapters.node2 = {
-            type = "executable",
-            command = "node",
-            args = { vim.fn.stdpath("data") .. "/mason/packages/node-debug2-adapter/out/src/nodeDebug.js" },
+    -- JavaScript/Node.js (js-debug-adapter)
+    if vim.fn.executable("js-debug-adapter") == 1 then
+        dap.adapters["pwa-node"] = {
+            type = "server",
+            host = "127.0.0.1",
+            port = "${port}",
+            executable = {
+                command = "js-debug-adapter",
+                args = { "${port}" },
+            },
         }
     end
-
+    -- Chrome (using js-debug-adapter for pwa-chrome)
+    if vim.fn.executable("js-debug-adapter") == 1 then
+        dap.adapters["pwa-chrome"] = {
+            type = "server",
+            host = "127.0.0.1",
+            port = "${port}",
+            executable = {
+                command = "js-debug-adapter",
+                args = { "${port}" },
+            },
+        }
+    end
     -- C# (.NET Core)
     if vim.fn.executable("netcoredbg") == 1 then
-        dap.adapters.coreclr = {
+        dap.adapters.netcoredbg = {
             type = "executable",
             command = "netcoredbg",
             args = { "--interpreter=vscode" },
         }
     end
-
     -- PHP
     if vim.fn.executable("php-debug-adapter") == 1 then
         dap.adapters.php = {
@@ -66,13 +77,10 @@ function M.setup()
             command = "php-debug-adapter",
         }
     end
-
-    -- Java
-    -- Note: Java debugging is typically handled by jdtls setup
+    -- Java (handled by jdtls)
     pcall(function()
         require("jdtls.dap").setup_dap_main_class_configs()
     end)
-
     -- Dart/Flutter
     if vim.fn.executable("dart") == 1 then
         dap.adapters.dart = {
@@ -81,8 +89,7 @@ function M.setup()
             args = { "debug_adapter" },
         }
     end
-
-    -- Zig (using codelldb)
+    -- Zig (reuse codelldb if available)
     if dap.adapters.codelldb then
         dap.adapters.zig = dap.adapters.codelldb
     end

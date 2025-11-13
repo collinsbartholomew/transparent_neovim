@@ -3,13 +3,13 @@ local M = {}
 
 function M.get_capabilities()
     local capabilities = vim.lsp.protocol.make_client_capabilities()
-    
+
     -- Enable folding capabilities
     capabilities.textDocument.foldingRange = {
         dynamicRegistration = false,
-        lineFoldingOnly = true
+        lineFoldingOnly = true,
     }
-    
+
     -- Enhanced completion capabilities
     capabilities.textDocument.completion.completionItem = {
         documentationFormat = { "markdown", "plaintext" },
@@ -49,8 +49,8 @@ function M.on_attach(client, bufnr)
         signature.on_attach({
             bind = true,
             handler_opts = {
-                border = "rounded"
-            }
+                border = "rounded",
+            },
         }, bufnr)
     end
 
@@ -77,3 +77,4 @@ function M.on_attach(client, bufnr)
 end
 
 return M
+
