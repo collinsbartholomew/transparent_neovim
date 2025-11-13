@@ -1,5 +1,7 @@
 -- lua/profile/lsp.lua
 -- Simplified, defensive LSP config using vim.lsp.config (Neovim 0.11+).
+-- Registers servers for on-demand activation.
+-- Inlay hints are explicitly disabled.
 local M = {}
 
 -- =======================
@@ -143,9 +145,6 @@ local function server_overrides(server_name)
             },
             init_options = { userLanguages = { eelixir = "html-eex", eruby = "erb" } },
         },
-        motoko_lsp = {
-            filetypes = { "motoko" }, -- Explicitly set for Motoko files (*.mo)
-        },
     }
     return overrides[server_name] or {}
 end
@@ -271,28 +270,19 @@ function M.setup()
     pcall(setup_ui_handlers)
     local capabilities = make_capabilities()
     vim.lsp.log.set_level(vim.log.levels.WARN)
-
     -- Add Motoko filetype mapping
     vim.filetype.add({
         extension = {
             mo = "motoko",
         },
     })
-
-    local lsp_configs_ok, lsp_configs = pcall(require, "lspconfig.configs")
-    if not lsp_configs_ok then
-        vim.notify("lspconfig.configs not available; skipping LSP setup", vim.log.levels.WARN)
-        return
-    end
-
+    local lsp_configs = require("lspconfig.configs")
     local mason_lspconfig_ok, mason_lspconfig = pcall(require, "mason-lspconfig")
     if not mason_lspconfig_ok then
         vim.notify("mason-lspconfig not available; skipping automatic LSP registration", vim.log.levels.WARN)
         return
     end
-
     mason_lspconfig.setup({})
-
     local installed_servers = mason_lspconfig.get_installed_servers()
     for _, server_name in ipairs(installed_servers) do
         local default_config = lsp_configs[server_name]
@@ -305,9 +295,19 @@ function M.setup()
             local overrides = server_overrides(server_name)
             local cfg = vim.tbl_deep_extend("force", default_config, base_config, overrides)
             vim.lsp.config(server_name, cfg)
-            vim.lsp.enable(server_name)
-        else
-            vim.notify("[lsp] Config for " .. server_name .. " not found. Skipping.", vim.log.levels.WARN)
+            if cfg.filetypes and #cfg.filetypes > 0 then
+                local group = vim.api.nvim_create_augroup("lsp_enable_" .. server_name, { clear = true })
+                vim.api.nvim_create_autocmd("FileType", {
+                    group = group,
+                    pattern = cfg.filetypes,
+                    once = true,
+                    callback = function()
+                        vim.schedule(function()
+                            pcall(vim.lsp.enable, server_name)
+                        end)
+                    end,
+                })
+            end
         end
     end
 end
