@@ -1,18 +1,47 @@
 local opt = vim.opt
-
-opt.mouse = ""
-opt.fillchars = { eob = " " }
+-- Core settings
+opt.mouse = "a"          -- Enable mouse in all modes
+opt.clipboard = "unnamedplus"  -- Use system clipboard
+vim.cmd([[runtime! plugin/matchparen.vim]])
+-- UI Improvements
+opt.fillchars = {
+    eob = " ",        -- Hide ~ at end of buffer
+    vert = "│",       -- Vertical split character
+    horiz = "─",      -- Horizontal split character
+    horizup = "┴",    -- Split corner characters
+    horizdown = "┬",
+    vertleft = "┤",
+    vertright = "├",
+    verthoriz = "┼",
+}
+-- Line numbers
 opt.number = true
 opt.relativenumber = true
-opt.clipboard = "unnamedplus"
-opt.guicursor = "a:block"
-
 -- Indentation settings
 opt.tabstop = 4
 opt.softtabstop = 4
 opt.shiftwidth = 4
-opt.expandtab = false
+opt.expandtab = true
 opt.smartindent = true
+
+-- Set up filetype-specific indentation
+-- File type specific indentation is handled in autocmds.lua
+
+-- Modern autocommands for better UX
+vim.api.nvim_create_augroup('modern_features', { clear = true })
+
+-- Smart wrap settings
+vim.api.nvim_create_autocmd('FileType', {
+    group = 'modern_features',
+    pattern = { 'markdown', 'txt', 'tex', 'gitcommit' },
+    callback = function()
+        vim.opt_local.wrap = true
+        vim.opt_local.linebreak = true
+        vim.opt_local.breakindent = true
+        vim.opt_local.breakindentopt = 'shift:2'
+        vim.opt_local.showbreak = '↪ '
+    end,
+})
 -- Search settings
 opt.hlsearch = false     -- Don't highlight search results
 opt.incsearch = true     -- Show search matches as you type
@@ -37,24 +66,16 @@ opt.undofile = true
 -- Additional search settings
 opt.ignorecase = true
 opt.smartcase = true
--- UI settings
+-- UI and performance settings
+-- `cmdheight=0` is supported only on newer Neovim; guard to avoid startup errors
 opt.cmdheight = 0
-opt.updatetime = 300
-opt.timeoutlen = 300
-opt.showtabline = 0 -- Hide tabline/top bar
-opt.pumheight = 10
-opt.scrolloff = 8
-opt.sidescrolloff = 8
-opt.smoothscroll = true
-opt.shortmess:append("c")
+opt.updatetime = 250       -- Faster completion
+opt.timeoutlen = 300       -- Time to wait for mapped sequence
+opt.redrawtime = 1500      -- Time for syntax highlighting
+opt.ttimeoutlen = 10       -- Time for key code sequences
+opt.showtabline = 0        -- Hide tabline/top bar
+opt.pumheight = 10         -- Maximum number of items in popup menu
+opt.scrolloff = 8          -- Lines of context
+opt.sidescrolloff = 8      -- Columns of context
+opt.shortmess:append({ W = true, I = true, c = true })  -- Reduce messages
 
--- Additional fillchars settings to ensure no ~ characters
-opt.fillchars:append({
-    vert = "│",
-    horiz = "─",
-    horizup = "┴",
-    horizdown = "┬",
-    vertleft = "┤",
-    vertright = "├",
-    verthoriz = "┼",
-})

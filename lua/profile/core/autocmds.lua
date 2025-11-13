@@ -2,20 +2,21 @@ local api = vim.api
 local profile_augroup = api.nvim_create_augroup("ProfileAutocommands", { clear = true })
 
 -- Filetype registration
-vim.filetype.add({
-	extension = {
-		mo = "motoko",
-		mojo = "mojo",
-		asm = "asm",
-		s = "asm",
-		S = "asm",
-	},
-	filename = {
-		["*.blade.php"] = "blade",
-	},
-	pattern = {
-		[".*%.🔥"] = "mojo",
-	},
+local ft = vim.filetype.add
+ft({
+    extension = {
+        mo = "motoko",
+        mojo = "mojo",
+        asm = "asm",
+        s = "asm",
+        S = "asm",
+    },
+    filename = {
+        ["*.blade.php"] = "blade",
+    },
+    pattern = {
+        [".*%.🔥"] = "mojo",
+    },
 })
 
 -- FileType-specific indentation settings (consolidated)
@@ -25,7 +26,7 @@ local indent_settings = {
 	-- 4 spaces
 	{ pattern = { "mojo", "python", "lua", "javascript", "typescript", "ruby", "rust", "c", "cpp", "java", "cs", "zig", "sh", "bash", "zsh", "vim", "php", "blade", "json", "toml" }, tabstop = 4, shiftwidth = 4, softtabstop = 4, expandtab = true },
 	-- 3 spaces
-	{ pattern = { "html", "xml", "xhtml", "svg", "css", "scss", "jsx", "tsx" },                                                                                                       tabstop = 3, shiftwidth = 3, softtabstop = 3, expandtab = true },
+	{ pattern = { "html", "xml", "xhtml", "svg", "css", "scss", "jsx", "tsx", "vue", "svelte", "astro" },                                                                                                       tabstop = 3, shiftwidth = 3, softtabstop = 3, expandtab = true },
 	-- 2 spaces
 	{ pattern = { "yaml", "yml" },                                                                                                                                                    tabstop = 2, shiftwidth = 2, softtabstop = 2, expandtab = true },
 }
@@ -43,13 +44,6 @@ for _, config in ipairs(indent_settings) do
 	})
 end
 
-api.nvim_create_autocmd("VimResized", {
-	group = profile_augroup,
-	callback = function()
-		pcall(vim.cmd, "wincmd=")
-	end,
-})
-
 api.nvim_create_autocmd("TextYankPost", {
 	group = profile_augroup,
 	callback = function()
@@ -57,18 +51,28 @@ api.nvim_create_autocmd("TextYankPost", {
 	end,
 })
 
+-- BufWritePre handlers for auto-mkdir and trailing whitespace removal
 api.nvim_create_autocmd("BufWritePre", {
-	group = profile_augroup,
-	command = [[%s/\s\+$//e]],
-})
-
-api.nvim_create_autocmd("BufWritePre", {
-	group = profile_augroup,
-	callback = function()
-		if not vim.fn.expand("%:p"):match("term://") then
-			vim.fn.mkdir(vim.fn.expand("%:p:h"), "p")
-		end
-	end,
+    group = profile_augroup,
+    callback = function(ev)
+        -- Remove trailing whitespace only for normal files
+        if not vim.bo[ev.buf].binary and vim.bo[ev.buf].filetype ~= '' 
+           and not vim.tbl_contains({'markdown', 'text'}, vim.bo[ev.buf].filetype) then
+            local save_cursor = vim.fn.getpos('.')
+            vim.cmd([[%s/\s\+$//e]])
+            vim.fn.setpos('.', save_cursor)
+        end
+        
+        -- Create directory if it doesn't exist, skip for special buffers
+        local path = vim.fn.expand("%:p")
+        if path:match("^%w+://") or path:match("^term://") then
+            return
+        end
+        local dir = vim.fn.fnamemodify(path, ":h")
+        if dir ~= "" and not vim.loop.fs_stat(dir) then
+            vim.fn.mkdir(dir, "p")
+        end
+    end,
 })
 
 api.nvim_create_autocmd("FileType", {
@@ -76,11 +80,12 @@ api.nvim_create_autocmd("FileType", {
 	pattern = {
 		"help", "startuptime", "qf", "lspinfo", "man", "spectre_panel",
 		"dbui", "neotest-summary", "neotest-output", "neotest-output-panel",
-		"aerial-nav", "grug-far",
+		"aerial-nav", "Trouble", "tsplayground", "notify",
 	},
 	callback = function(event)
 		vim.bo[event.buf].buflisted = false
-		vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = event.buf, silent = true })
+		vim.bo[event.buf].bufhidden = "wipe"
+		vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = event.buf, silent = true, desc = "Close window" })
 	end,
 })
 
@@ -92,47 +97,23 @@ api.nvim_create_autocmd("FileType", {
 	end,
 })
 
-api.nvim_create_autocmd({ "BufEnter", "FocusGained", "InsertLeave" }, {
-	group = profile_augroup,
-	callback = function()
-		if vim.opt.number:get() then
-			vim.opt.relativenumber = true
-		end
-	end,
+-- Smart number handling
+api.nvim_create_autocmd({ "BufEnter", "FocusGained", "InsertLeave", "WinEnter" }, {
+    group = profile_augroup,
+    callback = function()
+        if vim.wo.number and vim.api.nvim_get_mode().mode ~= 'i' then
+            vim.wo.relativenumber = true
+        end
+    end,
 })
 
--- Diagnostic configuration
-vim.o.signcolumn = "yes"
-vim.diagnostic.config({
-	virtual_text = false,
-	signs = {
-		text = {
-			[vim.diagnostic.severity.ERROR] = "",
-			[vim.diagnostic.severity.WARN] = "",
-			[vim.diagnostic.severity.INFO] = "",
-			[vim.diagnostic.severity.HINT] = "",
-		},
-	},
-	underline = true,
-	update_in_insert = false,
-	severity_sort = true,
-	float = {
-		border = "rounded",
-		source = "always",
-		header = "",
-		prefix = "",
-	},
+api.nvim_create_autocmd({ "BufLeave", "FocusLost", "InsertEnter", "WinLeave" }, {
+    group = profile_augroup,
+    callback = function()
+        if vim.wo.number then
+            vim.wo.relativenumber = false
+        end
+    end,
 })
-
-local function set_diagnostic_colors()
-	vim.api.nvim_set_hl(0, "DiagnosticSignError", { fg = "#F7768E", bg = "NONE" })
-	vim.api.nvim_set_hl(0, "DiagnosticSignWarn", { fg = "#E0AF68", bg = "NONE" })
-	vim.api.nvim_set_hl(0, "DiagnosticSignInfo", { fg = "#7AA2F7", bg = "NONE" })
-	vim.api.nvim_set_hl(0, "DiagnosticSignHint", { fg = "#0DB9D7", bg = "NONE" })
-end
-
-set_diagnostic_colors()
-api.nvim_create_autocmd("ColorScheme", {
-	group = profile_augroup,
-	callback = set_diagnostic_colors,
-})
+-- Ensure signcolumn is always visible (diagnostics configured in profile.core.diagnostics)
+vim.opt.signcolumn = "yes"

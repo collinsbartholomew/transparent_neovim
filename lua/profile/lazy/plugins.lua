@@ -1,6 +1,5 @@
 -- stylua: ignore start
 -- lazy.nvim plugin specs (reviewed & adjusted lazy/event settings)
--- I inspected the original table and made conservative changes:
 -- 1) Keep core runtime plugins and themes loaded eagerly (lazy = false) so statusline, icons,
 --    LSP, mason, treesitter, and notifications are available early.
 -- 2) Keep command/event-based lazy loading for plugins that are expensive and can load on demand.
@@ -11,7 +10,6 @@ return {
 	-- === Core & Performance ===
 	{
 		"folke/lazy.nvim",
-		version = "*",
 		lazy = false,
 		opts = {
 			ui = {
@@ -102,26 +100,20 @@ return {
 			"williamboman/mason.nvim",
 			"williamboman/mason-lspconfig.nvim",
 			"WhoIsSethDaniel/mason-tool-installer.nvim",
+			"folke/neodev.nvim",
 		},
+		config = function()
+			-- Setup Neodev for better Lua devicings (Neovim config)
+			require("neodev").setup({})
+		end,
 	},
 
 	{ "folke/neodev.nvim",     ft = "lua",     lazy = true, config = true },
-
-	-- Breadcrumbs (disabled to remove topbar)
-	-- {
-	-- 	"utilyre/barbecue.nvim",
-	-- 	event = { "BufReadPost", "BufNewFile" },
-	-- 	dependencies = { "SmiteshP/nvim-navic", "nvim-tree/nvim-web-devicons" },
-	-- 	config = function()
-	-- 		require("barbecue").setup({ theme = "auto", show_dirname = false, show_modified = true })
-	-- 	end,
-	-- },
 
 	-- === AI & Coding Assistance ===
 	{
 		"yetone/avante.nvim",
 		cmd = { "AvanteAsk", "AvanteChat", "AvanteToggle" },
-		version = false,
 		build = "make",
 		dependencies = {
 			"nvim-treesitter/nvim-treesitter",
@@ -130,8 +122,11 @@ return {
 			"MunifTanjim/nui.nvim",
 		},
 		config = function()
-			require("avante_lib").load() -- Load default libraries
-			require("avante").setup({ provider = "claude", auto_suggestions_provider = "claude" })
+			-- avante default libraries then provider config
+			pcall(function()
+				require("avante_lib").load()
+				require("avante").setup({ provider = "claude", auto_suggestions_provider = "claude" })
+			end)
 		end,
 	},
 
@@ -214,6 +209,22 @@ return {
 					map("n", "<leader>ghb", function() gs.blame_line({ full = true }) end, { desc = "Blame line" })
 					map("n", "<leader>gtb", gs.toggle_current_line_blame, { desc = "Toggle blame" })
 				end,
+				watch_gitdir = {
+					interval = 2000,  -- Reduce update frequency
+					follow_files = true,
+				},
+				sign_priority = 6,
+				update_debounce = 200,  -- Debounce sign updates
+				status_formatter = nil,  -- Disable status formatter for better performance
+				max_file_length = 40000,  -- Don't process files larger than 40k lines
+				preview_config = {
+					border = "rounded",
+					style = "minimal",
+					relative = "cursor",
+				},
+				word_diff = false,  -- Disable word diff for better performance
+				trouble = false,    -- Disable trouble integration if not needed
+				-- yadm configuration removed as it's not a valid gitsigns option
 			})
 		end,
 	},
@@ -272,7 +283,6 @@ return {
 
 	{
 		"echasnovski/mini.nvim",
-		version = false,
 		event = "BufReadPost",
 		config = function()
 			require("mini.indentscope").setup({ symbol = "│", options = { try_as_border = true } })
@@ -298,9 +308,25 @@ return {
 		event = "BufReadPost",
 		config = function()
 			require("illuminate").configure({
-				on_highlight = function()
-					vim.highlight.on_yank({ higroup = "Visual", timeout = 200 })
-				end
+				delay = 200,
+				large_file_cutoff = 1000,  -- Don't illuminate files with more than 1000 lines
+				large_file_overrides = {
+					providers = { "lsp" },  -- Only use LSP for large files
+				},
+				min_count_to_highlight = 2,  -- Only highlight if word appears at least twice
+				filetypes_denylist = {
+					"dirvish",
+					"fugitive",
+					"alpha",
+					"NvimTree",
+					"lazy",
+					"neo-tree",
+					"mason",
+					"notify",
+					"toggleterm",
+					"TelescopePrompt",
+				},
+				modes_allowlist = { "n" },  -- Only illuminate in normal mode
 			})
 		end
 	},
@@ -316,10 +342,28 @@ return {
 				min_window_height = 20,
 				mode = "topline",
 				separator = "─",
+				trim_scope = "outer",  -- Reduce context noise
+				throttle = true,       -- Enable throttling for better performance
+				patterns = {           -- Specify patterns for better context
+					default = {
+						"class",
+						"function",
+						"method",
+						"for",
+						"while",
+						"if",
+						"switch",
+						"case",
+					},
+				},
 			})
-			vim.api.nvim_set_hl(0, "TreesitterContext", { bg = "NONE" })
-			vim.api.nvim_set_hl(0, "TreesitterContextSeparator", { fg = "#555555", bg = "NONE" })
-			vim.api.nvim_set_hl(0, "TreesitterContextLineNumber", { fg = "#444444", bg = "NONE" })
+			
+			-- Set highlight groups in a protected call
+			pcall(function()
+				vim.api.nvim_set_hl(0, "TreesitterContext", { bg = "NONE" })
+				vim.api.nvim_set_hl(0, "TreesitterContextSeparator", { fg = "#555555", bg = "NONE" })
+				vim.api.nvim_set_hl(0, "TreesitterContextLineNumber", { fg = "#444444", bg = "NONE" })
+			end)
 		end,
 	},
 
@@ -430,11 +474,14 @@ return {
 		config = function()
 			-- 1. Setup the plugin with desired options (virtual rendering)
 			require("nvim-highlight-colors").setup({
-				render = "background",
+				render = "virtual",
 				virtual_symbol = "██",
 				virtual_symbol_prefix = "",
 				virtual_symbol_suffix = "",
 				virtual_symbol_position = "inline",
+				enable_tailwind = false,
+				hilight = false,
+				virtual_only = true,
 			})
 		end,
 	},
@@ -460,7 +507,6 @@ return {
 	{ "nvim-tree/nvim-web-devicons", lazy = false },
 	{
 		"echasnovski/mini.icons",
-		version = false,
 		event = "BufReadPost",
 		config = function()
 			require("mini.icons").setup()
@@ -514,9 +560,7 @@ return {
 	-- Rust
 	{
 		"mrcjkb/rustaceanvim",
-		version = "^4",
 		ft = { "rust" },
-		dependencies = { "nvim-lua/plenary.nvim", "williamboman/mason.nvim" },
 	},
 	{ "rust-lang/rust.vim",                ft = "rust", lazy = true },
 	{
@@ -587,16 +631,51 @@ return {
 		config = function()
 			require("auto-save").setup({
 				enabled = true,
-				trigger_events = { immediate_save = { "BufLeave", "FocusLost" }, defer_save = { "InsertLeave" } },
+				-- standard plugin option is `events`
+				events = { "BufLeave", "FocusLost", "InsertLeave", "TextChanged" },
+				write_all_buffers = false,
+				debounce_delay = 2000,
 				condition = function(buf)
 					local fn = vim.fn
-					local utils = require("auto-save.utils.data")
-					if fn.getbufvar(buf, "&modifiable") == 1 and utils.not_in(fn.getbufvar(buf, "&filetype"), {}) then
-						return true
+
+					-- Don't save for certain filetypes
+					local ignore_ft = {
+						"TelescopePrompt",
+						"neo-tree",
+						"dashboard",
+						"alpha",
+						"lazy",
+						"mason",
+						"lspinfo",
+						"notify",
+						"toggleterm",
+						"help",
+					}
+
+					local ft = fn.getbufvar(buf, "&filetype")
+					-- if filetype is in ignore list -> don't auto save
+					for _, v in ipairs(ignore_ft) do
+						if v == ft then
+							return false
+						end
 					end
-					return false
+
+					-- Don't save if buffer isn't modifiable
+					if not fn.getbufvar(buf, "&modifiable") then
+						return false
+					end
+
+					-- Don't save if file size > 1MB (guard against unsaved/empty names)
+					local name = fn.expand("%:p")
+					if name ~= "" then
+						local size = fn.getfsize(name)
+						if size > 1024 * 1024 then
+							return false
+						end
+					end
+
+					return true
 				end,
-				debounce_delay = 1000,
 			})
 		end,
 	},
@@ -617,3 +696,4 @@ return {
 		end,
 	},
 }
+-- stylua: ignore end

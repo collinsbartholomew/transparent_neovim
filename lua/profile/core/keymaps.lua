@@ -14,7 +14,6 @@ function M.setup()
         { '<leader>l', group = 'LSP' }, -- Language Server Protocol operations
         { '<leader>o', group = 'Overseer/Task' }, -- Task and build operations
         { '<leader>p', group = 'Project/Session' }, -- Project and session management
-        { '<leader>q', group = 'Quickfix' }, -- Quickfix list operations
         { '<leader>r', group = 'Refactor' }, -- Code refactoring operations
         { '<leader>sr', group = 'Search/Replace' }, -- Search and replace operations
         { '<leader>t', group = 'Test/Terminal/Toggle' }, -- Testing, terminal, and toggle operations
@@ -23,15 +22,44 @@ function M.setup()
         { '<leader>y', group = 'UI/Theme' }, -- UI theme operations
     })
 
-    -- Buffer management keymaps
-    -- These keymaps handle operations related to managing buffers (open files)
-    wk.add({
-        { '<leader>bb', '<cmd>Telescope buffers<cr>', desc = 'Pick buffer' }, -- Pick a buffer from the buffer list
-        { '<leader>bc', '<cmd>Telescope buffers<cr>', desc = 'Pick close buffer' }, -- Pick and close a buffer
-        { '<leader>bd', '<cmd>bdelete<cr>', desc = 'Delete buffer' }, -- Delete current buffer
-        { '<leader>bn', '<cmd>bnext<cr>', desc = 'Next buffer' }, -- Switch to next buffer
-        { '<leader>bp', '<cmd>bprevious<cr>', desc = 'Prev buffer' }, -- Switch to previous buffer
-    })
+    -- Buffer, window and tab management
+    local function setup_buffer_window_maps()
+        -- Buffer operations
+        wk.add({
+            { '<leader>bb', '<cmd>Telescope buffers<cr>', desc = 'Pick buffer' },
+            { '<leader>bd', '<cmd>Bdelete<cr>', desc = 'Delete buffer' },
+            { '<leader>bD', '<cmd>%bd|e#|bd#<cr>', desc = 'Close all but current' },
+            { '<S-h>', '<cmd>BufferLineCyclePrev<cr>', desc = 'Previous buffer' },
+            { '<S-l>', '<cmd>BufferLineCycleNext<cr>', desc = 'Next buffer' },
+        })
+
+        -- Window navigation and management
+        wk.add({
+            { '<C-h>', '<C-w>h', desc = 'Move to left window' },
+            { '<C-j>', '<C-w>j', desc = 'Move to below window' },
+            { '<C-k>', '<C-w>k', desc = 'Move to above window' },
+            { '<C-l>', '<C-w>l', desc = 'Move to right window' },
+            { '<leader>-', '<cmd>split<cr>', desc = 'Split horizontal' },
+            { '<leader>|', '<cmd>vsplit<cr>', desc = 'Split vertical' },
+            { '<leader>q', '<cmd>close<cr>', desc = 'Close window' },
+            { '<A-Up>', '<cmd>resize -2<cr>', desc = 'Decrease height' },
+            { '<A-Down>', '<cmd>resize +2<cr>', desc = 'Increase height' },
+            { '<A-Left>', '<cmd>vertical resize -2<cr>', desc = 'Decrease width' },
+            { '<A-Right>', '<cmd>vertical resize +2<cr>', desc = 'Increase width' },
+        })
+
+        -- Tab management
+        wk.add({
+            { '<leader><tab>', group = 'Tabs' },
+            { '<leader><tab>n', '<cmd>tabnew<cr>', desc = 'New tab' },
+            { '<leader><tab>c', '<cmd>tabclose<cr>', desc = 'Close tab' },
+            { '<leader><tab>o', '<cmd>tabonly<cr>', desc = 'Close other tabs' },
+            { '<leader><tab>]', '<cmd>tabnext<cr>', desc = 'Next tab' },
+            { '<leader><tab>[', '<cmd>tabprevious<cr>', desc = 'Previous tab' },
+        })
+    end
+
+    setup_buffer_window_maps()
 
     -- Find operations using Telescope
     -- These keymaps use Telescope to find various items in the project
@@ -61,17 +89,47 @@ function M.setup()
     })
 
     -- LSP (Language Server Protocol) operations
-    -- These keymaps handle LSP features like code navigation and refactoring
-    wk.add({
-        { '<leader>la', vim.lsp.buf.code_action, desc = 'Code action' },
-        { '<leader>lf', function() vim.lsp.buf.format({ async = true }) end, desc = 'Format' },
-        { '<leader>ll', '<cmd>LspInfo<cr>', desc = 'LSPInfo' },
-        { '<leader>lR', vim.lsp.buf.rename, desc = 'Rename' },
-        { '<leader>ls', vim.lsp.buf.signature_help, desc = 'Signature help' },
-        { '<leader>lw', '<cmd>Telescope lsp_workspace_symbols<cr>', desc = 'Workspace symbols' },
-        { '<leader>lc', vim.lsp.codelens.run, desc = 'Run codelens' },
-        { '<leader>lh', function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled()) end, desc = 'Toggle inlay hints' },
-    })
+    -- These keymaps handle LSP features and code navigation
+    local function setup_lsp_maps()
+        -- LSP actions
+        wk.add({
+            { '<leader>la', vim.lsp.buf.code_action, desc = 'Code action' },
+            { '<leader>lf', function() vim.lsp.buf.format({ async = true }) end, desc = 'Format' },
+            { '<leader>lr', vim.lsp.buf.rename, desc = 'Rename' },
+            { '<leader>ls', vim.lsp.buf.signature_help, desc = 'Signature help' },
+            { '<leader>lw', '<cmd>Telescope lsp_workspace_symbols<cr>', desc = 'Workspace symbols' },
+            { '<leader>lc', vim.lsp.codelens.run, desc = 'Run codelens' },
+            { '<leader>lh', function()
+                local ok, inlay = pcall(function()
+                    local bufnr = 0
+                    local cur = vim.b[bufnr].__inlay_hints_enabled
+                    local new = not cur
+                    pcall(vim.lsp.inlay_hint.enable, bufnr, new)
+                    vim.b[bufnr].__inlay_hints_enabled = new
+                    vim.notify('Inlay hints ' .. (new and 'enabled' or 'disabled'))
+                end)
+                if not ok then
+                    vim.notify('Inlay hints not supported by server', vim.log.levels.WARN)
+                end
+            end, desc = 'Toggle inlay hints' },
+            { '<leader>li', '<cmd>LspInfo<cr>', desc = 'LSP info' },
+            { '<leader>lm', '<cmd>Mason<cr>', desc = 'Mason info' },
+        })
+
+        -- LSP navigation
+        wk.add({
+            { 'gD', vim.lsp.buf.declaration, desc = 'Goto Declaration' },
+            { 'gd', vim.lsp.buf.definition, desc = 'Goto Definition' },
+            { 'gr', vim.lsp.buf.references, desc = 'Goto References' },
+            { 'gi', vim.lsp.buf.implementation, desc = 'Goto Implementation' },
+            { 'gt', vim.lsp.buf.type_definition, desc = 'Goto Type Definition' },
+            { 'K', vim.lsp.buf.hover, desc = 'Hover Documentation' },
+        })
+
+        -- Diagnostic navigation is handled in diagnostics.lua
+    end
+
+    setup_lsp_maps()
 
     -- Overseer/Task operations
     -- These keymaps handle task management and execution
@@ -173,12 +231,21 @@ function M.setup()
         { '<leader>srw', require('spectre').open_visual, desc = 'Replace word', mode = 'v' }, -- Replace selected word
     })
 
-    -- Structure, Test, and Terminal operations
+    -- Structure and navigation
     wk.add({
-        { '<leader>so', group = 'Structure/Outline' },
-        { '<leader>sot', '<cmd>AerialToggle<cr>', desc = 'Toggle outline' },
-        { '<leader>sof', '<cmd>AerialNavToggle<cr>', desc = 'Navigate symbols' },
-        { '<leader>tf', '<cmd>Neotest summary<cr>', desc = 'Test summary' },
+        { '<leader>s', group = 'Structure' },
+        { '<leader>so', '<cmd>AerialToggle<cr>', desc = 'Toggle symbol outline' },
+        { '<leader>sn', '<cmd>AerialNavToggle<cr>', desc = 'Navigate symbols' },
+        { '<leader>ss', '<cmd>Telescope aerial<cr>', desc = 'Search symbols' },
+    })
+
+    -- Testing operations
+    wk.add({
+        { '<leader>t', group = 'Test' },
+        { '<leader>ts', '<cmd>Neotest summary<cr>', desc = 'Test summary' },
+        { '<leader>tr', '<cmd>Neotest run<cr>', desc = 'Run nearest test' },
+        { '<leader>tf', '<cmd>Neotest run file<cr>', desc = 'Run test file' },
+        { '<leader>tl', '<cmd>Neotest run last<cr>', desc = 'Run last test' },
         { '<leader>tn', '<cmd>Neotest run<cr>', desc = 'Run nearest test' },
         { '<leader>tt', '<cmd>ToggleTerm<cr>', desc = 'Toggle terminal' },
     })
@@ -202,10 +269,7 @@ function M.setup()
         { '<leader>xq', '<cmd>Trouble qflist toggle<cr>', desc = 'Quickfix' },
         { '<leader>xl', '<cmd>Trouble loclist toggle<cr>', desc = 'Location List' },
         { '<leader>xs', '<cmd>Trouble symbols toggle focus=false<cr>', desc = 'Symbols' },
-        { 'gd', vim.lsp.buf.definition, desc = 'Goto Definition' },
-        { 'grr', vim.lsp.buf.references, desc = 'Goto References' },
-        { 'gri', vim.lsp.buf.implementation, desc = 'Goto Implementation' },
-        { 'K', vim.lsp.buf.hover, desc = 'Hover' },
+        -- LSP keymaps moved to LSP section
         { '<leader>nb', "<cmd>lua require('nvim-navbuddy').open()<cr>", desc = 'Navbuddy' },
         { '<leader>cc', '<Plug>(comment_toggle_linewise)', desc = 'Comment toggle', mode = 'n' },
         { '<leader>cc', '<Plug>(comment_toggle_linewise_visual)', desc = 'Comment toggle', mode = 'v' },
@@ -218,10 +282,7 @@ function M.setup()
 
     -- Window navigation, text movement, and utilities
     wk.add({
-        { '<A-Up>', ':resize -2<CR>', desc = 'Resize up' },
-        { '<A-Down>', ':resize +2<CR>', desc = 'Resize down' },
-        { '<A-Left>', ':vertical resize -2<CR>', desc = 'Resize left' },
-        { '<A-Right>', ':vertical resize +2<CR>', desc = 'Resize right' },
+        -- Window resize keymaps moved to buffer/window section
         { '<S-l>', ':bnext<CR>', desc = 'Next buffer' },
         { '<S-h>', ':bprevious<CR>', desc = 'Previous buffer' },
         { '<A-j>', '<Esc>:m .+1<CR>==gi', desc = 'Move line down' },

@@ -12,18 +12,17 @@ function M.setup()
 
     wk.setup({
         preset = 'modern',
-        delay = function(ctx)
-            return ctx.plugin and 0 or 500
-        end,
-        filter = function(mapping)
-            return true
-        end,
-        expand = function(ctx)
-            return ctx.full_keys and not ctx.mode:match('[ot]') or false
-        end,
-        notify = true,
-        show_help = true,
-        show_keys = true,
+        delay = 300,
+        popup_mappings = {
+            scroll_down = '<c-d>',
+            scroll_up = '<c-u>',
+        },
+        window = {
+            border = 'rounded',
+            padding = { 2, 2, 2, 2 },
+        },
+        show_help = false,  -- Disable help to reduce visual clutter
+        show_keys = true,   -- Keep keys visible
         win = {
             no_overlap = true,
             padding = { 1, 1 },

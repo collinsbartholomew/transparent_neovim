@@ -7,7 +7,6 @@ function M.setup()
 	local trouble = require("trouble")
 
 	trouble.setup({
-		icons = true,
 		fold_open = "󰝤",
 		fold_closed = "󰝥",
 		indent_lines = true,

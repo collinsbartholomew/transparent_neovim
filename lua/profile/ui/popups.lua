@@ -20,25 +20,8 @@ function M.setup()
 	-- Configure all popup window handlers with consistent styling
 	-- ============================================================================
 
-	-- LSP Hover Handler with 70% font
-	local original_hover = vim.lsp.handlers["textDocument/hover"]
-	vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
-		border = "rounded",
-		max_width = 50,
-		max_height = 10,
-		focusable = false,
-		silent = true,
-	})
-
-	-- LSP Signature Help Handler with 70% font
-	local original_signature = vim.lsp.handlers["textDocument/signatureHelp"]
-	vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
-		border = "rounded",
-		max_width = 50,
-		max_height = 8,
-		focusable = false,
-		silent = true,
-	})
+	-- LSP handlers are managed centrally (profile.lsp.helpers)
+	-- This module focuses on popup window appearance only.
 
 	-- Diagnostic configuration is handled in core/autocmds.lua
 	-- This ensures consistent settings across the entire configuration

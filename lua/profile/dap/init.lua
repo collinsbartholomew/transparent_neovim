@@ -13,51 +13,32 @@ function M.setup()
         return false
     end
 
-    -- Configure DAP handlers
-    local handlers = {
-        -- Python handler
-        debugpy = function(config)
-            require("mason-nvim-dap.mappings.source").python(config)
-        end,
+    -- Load centralized adapter and configuration setups
+    local adapters_ok = pcall(require("profile.dap.adapters").setup)
+    if not adapters_ok then
+        vim.notify("Failed to load DAP adapters", vim.log.levels.WARN)
+    end
 
-        -- Java handler
-        ["java-debug"] = function(config)
-            require("mason-nvim-dap.mappings.source").java(config)
-        end,
+    local configs_ok = pcall(require("profile.dap.configurations").setup)
+    if not configs_ok then
+        vim.notify("Failed to load DAP configurations", vim.log.levels.WARN)
+    end
 
-        -- C/C++ handler
-        cppdbg = function(config)
-            require("mason-nvim-dap.mappings.source").cppdbg(config)
-        end,
-
-        -- Go handler
-        delve = function(config)
-            require("mason-nvim-dap.mappings.source").go(config)
-        end,
-
-        -- JavaScript/TypeScript handler
-        chrome = function(config)
-            require("mason-nvim-dap.mappings.source").chrome(config)
-        end,
-        node2 = function(config)
-            require("mason-nvim-dap.mappings.source").node2(config)
-        end,
-
-        -- C# handler
-        netcoredbg = function(config)
-            require("mason-nvim-dap.mappings.source").netcoredbg(config)
-        end,
-
-        -- PHP handler
-        ["php-debug"] = function(config)
-            require("mason-nvim-dap.mappings.source").php(config)
-        end,
-
-        -- Dart/Flutter handler
-        ["dart-debug"] = function(config)
-            require("mason-nvim-dap.mappings.source").dart(config)
-        end,
-    }
+    -- Optional: ensure required DAP adapters are installed via mason-nvim-dap
+    local mason_dap_ok, mason_dap = pcall(require, "mason-nvim-dap")
+    if mason_dap_ok then
+        mason_dap.setup({
+            ensure_installed = {
+                "debugpy",           -- Python
+                "delve",            -- Go
+                "js-debug-adapter",  -- JavaScript/TypeScript
+                "php-debug-adapter", -- PHP
+                "codelldb",         -- C/C++/Rust/Zig
+                "netcoredbg",       -- C#
+            },
+            automatic_installation = true,
+        })
+    end
 
     dapui.setup()
 

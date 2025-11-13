@@ -1,240 +1,361 @@
---nvim-cmp setup
---This file configures the completion engine for Neovim
-
 local M = {}
+local cmp_enabled = true
+
+local function safe_require(name)
+    local ok, mod = pcall(require, name)
+    return ok and mod or nil
+end
+
+-- Helper: has non-whitespace character before cursor
+local function has_words_before()
+    local col = vim.fn.col('.') - 1
+    if col == 0 then
+        return false
+    end
+    local line = vim.api.nvim_get_current_line()
+    local char = line:sub(col, col)
+    return not char:match("%s")
+end
 
 function M.setup()
-    local cmp_ok, cmp = pcall(require, "cmp")
-    if not cmp_ok then
+    local cmp = safe_require("cmp")
+    if not cmp then
         vim.notify("nvim-cmp not available", vim.log.levels.WARN)
         return
     end
-    
-    local luasnip_ok, luasnip = pcall(require, "luasnip")
-    if not luasnip_ok then
-        vim.notify("luasnip not available", vim.log.levels.WARN)
-        return
+
+    local luasnip = safe_require("luasnip")
+    if not luasnip then
+        vim.notify("luasnip not available; snippet support will be disabled", vim.log.levels.WARN)
+    else
+        local loader = safe_require("luasnip.loaders.from_vscode")
+        if loader then
+            loader.lazy_load()
+        end
+
+        -- sensible extension for react/tsx
+        pcall(function()
+            luasnip.filetype_extend("javascriptreact", { "javascript", "html" })
+            luasnip.filetype_extend("typescriptreact", { "typescript", "javascript", "html" })
+        end)
     end
 
-    -- Extend filetypes so that react snippets are available in jsx/tsx files
-    luasnip.filetype_extend("javascriptreact", { "javascript" })
-    luasnip.filetype_extend("typescriptreact", { "typescript" })
-
-    -- CustomizedCMP appearance
-    -- Define icons for different completion kinds for better visual recognition
+    -- icons & source labels (keep short)
     local kind_icons = {
-        Text = "", -- Text completion
-        Method = "󰆧", -- Method completion
-        Function = "󰊕", -- Function completion
-        Constructor = "", -- Constructor completion
-        Field = "󰇽", -- Field completion
-        Variable = "󰂡", -- Variable completion
-        Class = "󰠱", -- Class completion
-        Interface = "", -- Interface completion
-        Module = "", --Module completion
-        Property = "󰜢", -- Property completion
-        Unit = "", -- Unit completion
-        Value = "󰎠", -- Value completion
-        Enum = "", -- Enum completion
-        Keyword = "󰌋", -- Keyword completion
-        Snippet = "", -- Snippet completion
-        Color = "󰏘", -- Color completion
-        File = "󰈙", -- File completion
-        Reference = "", -- Reference completion
-        Folder = "󰉋", -- Folder completion
-        EnumMember = "", -- Enum member completion
-        Constant = "󰏿", -- Constant completion
-        Struct = "", -- Struct completion
-        Event = "", -- Event completion
-        Operator = "󰆕", -- Operator completion
-        TypeParameter = "󰅲", -- Type parameter completion
+        Text = "", Method = "", Function = "", Constructor = "",
+        Field = "", Variable = "", Class = "", Interface = "",
+        Module = "", Property = "", Unit = "", Value = "",
+        Enum = "", Keyword = "", Snippet = "", Color = "",
+        File = "", Reference = "", Folder = "", EnumMember = "",
+        Constant = "", Struct = "", Event = "", Operator = "",
+        TypeParameter = "",
     }
 
-    local function has_words_before()
-        local line, col = unpack(vim.api.nvim_win_get_cursor(0))
-        return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
+    local source_names = {
+        nvim_lsp = "LSP",
+        luasnip = "Snp",
+        buffer = "Buf",
+        path = "Path",
+        cmdline = "Cmd",
+        crates = "Crate",
+        git = "Git",
+    }
+
+    -- sensible default sources (we keep a file-size aware buffer filter)
+    local function buffer_source_opts(max_size)
+        return {
+            name = "buffer",
+            priority = 400,
+            max_item_count = 10,
+            option = {
+                get_bufnrs = function()
+                    local bufs = {}
+                    local buflist = vim.api.nvim_list_bufs()
+                    for _, b in ipairs(buflist) do
+                        if vim.api.nvim_buf_is_valid(b) and vim.api.nvim_buf_get_option(b, "buftype") == "" then
+                            local fname = vim.api.nvim_buf_get_name(b)
+                            if fname == "" then
+                                -- keep unnamed buffers
+                                bufs[b] = true
+                            else
+                                local ok, stat = pcall(vim.loop.fs_stat, fname)
+                                if ok and stat and stat.size and stat.size < max_size then
+                                    bufs[b] = true
+                                end
+                            end
+                        end
+                    end
+                    return vim.tbl_keys(bufs)
+                end,
+            },
+        }
     end
 
-    -- Main CMP setup for insert mode
+    -- main cmp.setup
     cmp.setup({
-        -- Configure snippet expansion
+        enabled = function()
+            return cmp_enabled
+        end,
+
+        -- single canonical completion options
+        completion = { completeopt = "menu,menuone,noinsert,noselect", keyword_length = 1 },
+
         snippet = {
             expand = function(args)
-                -- Use luasnip to expand snippets
-                luasnip.lsp_expand(args.body)
+                if luasnip then
+                    luasnip.lsp_expand(args.body)
+                end
             end,
         },
 
-        -- Configure completion window appearance with proper styling
+        performance = {
+            debounce = 30,
+            throttle = 20,
+            fetching_timeout = 100,
+            max_view_entries = 25,
+            async_budget = 2,
+            max_chunk_size = 1000,
+        },
+
+        experimental = {
+            ghost_text = { hl_group = "CmpGhostText" },
+        },
+
+        view = {
+            entries = { name = "custom", selection_order = "near_cursor" },
+        },
+
         window = {
-            -- Completion popup window with border
             completion = cmp.config.window.bordered({
-                winhighlight = "Normal:CmpNormal,FloatBorder:CmpBorder,CursorLine:CmpCursorLine,Search:None",
+                winhighlight = "Normal:CmpNormal,FloatBorder:CmpBorder,CursorLine:CmpCursorLine",
                 col_offset = -3,
-                side_padding = 0,
-                max_width = 45,
-                max_height = 8,
-                border = "rounded",
-                zindex = 1000,
+                side_padding = 1,
             }),
-            -- Documentation popup window with border
             documentation = cmp.config.window.bordered({
-                winhighlight = "Normal:CmpDocNormal,FloatBorder:CmpDocBorder,CursorLine:CmpDocCursor,Search:None",
-                max_width = 35,
-                max_height = 5,
-                zindex = 1001,
-                border = "rounded",
+                winhighlight = "Normal:CmpDocNormal,FloatBorder:CmpDocBorder",
+                max_width = 60,
+                max_height = 15,
             }),
         },
 
-        -- Configure how completions are formatted and displayed with smaller font
         formatting = {
-            fields = { "kind", "abbr", "menu" }, -- Display fields in this order
-            format = function(entry, vim_item)
-                -- Add icons to completion kinds only (no kind text)
-                vim_item.kind = kind_icons[vim_item.kind] or vim_item.kind
+            fields = { "abbr", "kind", "menu" },
+            format = function(entry, item)
+                local kind = item.kind or "Text"
+                item.kind = (kind_icons[kind] or "●") .. " " .. kind
+                item.kind_hl_group = "CmpItemKind" .. kind
 
-                -- Set source labels for different completion sources
-                vim_item.menu = ({
-                    nvim_lsp = "[LSP]",    -- Language Server Protocol
-                    luasnip = "[Snippet]", -- Snippet engine
-                    buffer = "[Buffer]",   -- Current buffer
-                    path = "[Path]",       -- File path
-                    cmdline = "[Cmd]",     -- Command line
-                })[entry.source.name]
+                local sname = entry.source and entry.source.name or ""
+                item.menu = source_names[sname] or ("[" .. sname .. "]")
 
-                return vim_item
+                if #item.abbr > 48 then
+                    item.abbr = item.abbr:sub(1, 45) .. "…"
+                end
+                return item
             end,
         },
 
-        -- Configure key mappings for completion
         mapping = cmp.mapping.preset.insert({
-            ["<C-b>"] = cmp.mapping.scroll_docs(-4), -- Scroll documentation up
-            ["<C-f>"] = cmp.mapping.scroll_docs(4),  -- Scroll documentation down
-            ["<C-Space>"] = cmp.mapping.complete(),  -- Trigger completion manually
-            ["<C-e>"] = cmp.mapping.abort(),         -- Close completion menu
-            ["<CR>"] = cmp.mapping.confirm({
-                behavior = cmp.ConfirmBehavior.Replace,
-                select = true,
-            }),
-            ["<Tab>"] = cmp.mapping(function(fallback)
-                if cmp.visible() then
-                    local entry = cmp.get_selected_entry()
-                    if not entry then
-                        cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
-                    else
-                        cmp.confirm({
-                            behavior = cmp.ConfirmBehavior.Replace,
-                            select = true,
-                        })
-                    end
-                elseif luasnip.expand_or_jumpable() then
-                    luasnip.expand_or_jump()
-                elseif has_words_before() then
-                    cmp.complete()
+            ["<C-b>"] = cmp.mapping.scroll_docs(-4),
+            ["<C-f>"] = cmp.mapping.scroll_docs(4),
+            ["<C-Space>"] = cmp.mapping.complete(),
+            ["<C-e>"] = cmp.mapping.abort(),
+
+            ["<CR>"] = cmp.mapping(function(fallback)
+                if cmp.visible() and cmp.get_selected_entry() then
+                    cmp.confirm({ behavior = cmp.ConfirmBehavior.Replace, select = false })
                 else
                     fallback()
                 end
-            end, {
-                "i",
-                "s",
-            }),
-            ["<S-Tab>"] = cmp.mapping(function(fallback)
-                -- Shift+Tab navigation through completions and snippets
+            end, { "i", "s" }),
+
+            ["<Tab>"] = cmp.mapping(function(fallback)
                 if cmp.visible() then
-                    -- If completion menu is visible, select previous item
+                    cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert })
+                elseif luasnip and luasnip.expand_or_locally_jumpable and luasnip.expand_or_locally_jumpable() then
+                    luasnip.expand_or_jump()
+                elseif has_words_before() then
+                    cmp.complete()
+                    vim.schedule(function()
+                        if cmp.visible() and not cmp.get_selected_entry() then
+                            cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert })
+                        end
+                    end)
+                else
+                    fallback()
+                end
+            end, { "i", "s" }),
+
+            ["<S-Tab>"] = cmp.mapping(function(fallback)
+                if cmp.visible() then
                     cmp.select_prev_item()
-                elseif luasnip.jumpable(-1) then
-                    -- If in a snippet, jumpto previous field
+                elseif luasnip and luasnip.jumpable and luasnip.jumpable(-1) then
                     luasnip.jump(-1)
                 else
-                    -- Otherwise, use fallback behavior
                     fallback()
                 end
             end, { "i", "s" }),
         }),
 
-        -- Configure completion sources and their priority
-        sources = cmp.config.sources({
-            { name = "nvim_lsp" },                   -- Language Server Protocol completions (highest priority)
-            { name = "luasnip" },                    -- Snippet completions
-        }, {
-            { name = "buffer", keyword_length = 3 }, -- Buffer completions (3 chars minimum)
-            { name = "path" },                       -- File path completions
-        }),
-
-        -- Configure completion behavior settings
-        completion = {
-            completeopt = "menu,menuone,noinsert", -- Completion options
-            keyword_length = 1,                    -- Minimum keyword length to trigger completion
-        },
-
-
-        preselect = cmp.PreselectMode.None,
-        confirmation = {
-            default_behavior = cmp.ConfirmBehavior.Replace,
-            get_commit_characters = function(commit_characters)
-                return commit_characters
-            end,
-        },
-        -- Make text completions have the lowest priority
         sorting = {
             priority_weight = 2,
             comparators = {
-                -- Deprioritize Text completions (kind 1)
-                function(entry1, entry2)
-                    local kind1 = entry1:get_kind()
-                    local kind2 = entry2:get_kind()
-                    local is_text1 = kind1 == 1 -- Text kind
-                    local is_text2 = kind2 == 1 -- Text kind
-                    if is_text1 and not is_text2 then
-                        return false
-                    elseif is_text2 and not is_text1 then
-                        return true
-                    end
-                    return nil -- Continue with other comparators
-                end,
-                -- Prioritize LSP completions
+                cmp.config.compare.score,
+                cmp.config.compare.exact,
                 cmp.config.compare.locality,
                 cmp.config.compare.recently_used,
-                cmp.config.compare.score,
                 cmp.config.compare.offset,
+                cmp.config.compare.kind,
+                cmp.config.compare.sort_text,
+                cmp.config.compare.length,
                 cmp.config.compare.order,
             },
         },
+
+        -- single canonical sources block (we'll override per-filetype below)
+        sources = (function()
+            local max_size = 1024 * 1024 -- 1MB
+            local file_size = nil
+            local ok, stat = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(0))
+            if ok and stat and stat.size then
+                file_size = stat.size
+            end
+
+            if file_size and file_size > max_size then
+                -- large file: prioritize LSP and path to avoid heavy buffer scanning
+                return cmp.config.sources({
+                    { name = "nvim_lsp", priority = 1000, max_item_count = 10, keyword_length = 4 },
+                    { name = "path", priority = 800, max_item_count = 5 },
+                })
+            end
+
+            return cmp.config.sources({
+                { name = "nvim_lsp", priority = 1000, max_item_count = 20, keyword_length = 3 },
+                { name = "luasnip", priority = 900, max_item_count = 10 },
+                { name = "path", priority = 800, max_item_count = 10 },
+                buffer_source_opts(1024 * 1024),
+            })
+        end)(),
     })
 
-    -- Command mode completion
+    -- cmdline setups
     cmp.setup.cmdline(":", {
         mapping = cmp.mapping.preset.cmdline(),
-        sources = {{ name = "cmdline" }},
+        sources = cmp.config.sources({
+            { name = "path" },
+        }, {
+            { name = "cmdline", keyword_length = 2 },
+        }),
     })
 
-    -- Search mode completion
-    cmp.setup.cmdline("/", {
+    cmp.setup.cmdline({ "/", "?" }, {
         mapping = cmp.mapping.preset.cmdline(),
-        sources = {{ name = "buffer" }},
+        sources = {
+            { name = "buffer" },
+        },
     })
 
-    -- Filetype-specific configurations (only where different from default)
-    cmp.setup.filetype("rust", {
+    -- filetype-specific tweaks
+    if safe_require("crates") then
+        cmp.setup.filetype({ "rust", "toml" }, {
+            sources = cmp.config.sources({
+                { name = "nvim_lsp" },
+                { name = "crates" },
+                { name = "luasnip" },
+            }, {
+                { name = "buffer" },
+            }),
+        })
+    end
+
+    cmp.setup.filetype("python", {
         sources = cmp.config.sources({
             { name = "nvim_lsp" },
-            { name = "crates" },
             { name = "luasnip" },
         }, {
-            { name = "buffer", keyword_length = 3 },
             { name = "path" },
+            { name = "buffer", keyword_length = 4 },
         }),
     })
-    
-    cmp.setup.filetype("toml", {
+
+    cmp.setup.filetype("motoko", {
         sources = cmp.config.sources({
-            { name = "crates" },
-            { name = "buffer", keyword_length = 3 },
+            { name = "nvim_lsp" },
+            { name = "luasnip" },
             { name = "path" },
+        }, {
+            { name = "buffer", keyword_length = 2 },
         }),
     })
+
+    -- git commit
+    if safe_require("cmp_git") then
+        safe_require("cmp_git").setup()
+        cmp.setup.filetype("gitcommit", {
+            sources = cmp.config.sources({
+                { name = "git" },
+            }, {
+                { name = "buffer" },
+            }),
+        })
+    else
+        cmp.setup.filetype("gitcommit", { sources = { { name = "buffer" } } })
+    end
+
+    -- crates on demand (also via autocmd to avoid forcing load)
+    vim.api.nvim_create_autocmd("FileType", {
+        pattern = { "rust", "toml" },
+        callback = function()
+            if safe_require("crates") then
+                -- reconfigure or ensure crates source is available; many configs just rely on the source existing
+            end
+        end,
+    })
+
+    -- auto-import edits on confirm (apply additionalTextEdits from LSP completions)
+    cmp.event:on("confirm_done", function(event)
+        local entry = event.entry
+        if not entry then
+            return
+        end
+        if entry.source and entry.source.name == "nvim_lsp" then
+            local item = entry:get_completion_item()
+            if item and item.additionalTextEdits then
+                vim.lsp.util.apply_text_edits(item.additionalTextEdits, vim.api.nvim_get_current_buf(), "utf-16")
+            end
+        end
+    end)
+
+    -- per-project .cmp.lua loader: load safely if exists in cwd
+    vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+        callback = function()
+            local path = vim.fn.getcwd() .. "/.cmp.lua"
+            local stat = vim.loop.fs_stat(path)
+            if stat and stat.type == "file" then
+                local ok, res = pcall(loadfile, path)
+                if not ok then
+                    vim.notify("Error loading project cmp config: " .. tostring(res), vim.log.levels.WARN)
+                else
+                    pcall(res) -- run the returned chunk (it's expected to call cmp.setup or similar)
+                end
+            end
+        end,
+    })
+
+    -- Commands
+    vim.api.nvim_create_user_command("CmpStatus", function()
+        local status = {
+            enabled = cmp_enabled,
+            active_buf = vim.api.nvim_get_current_buf(),
+            sources = vim.tbl_map(function(s) return s.name end, cmp.get_config().sources or {}),
+        }
+        print(vim.inspect(status))
+    end, { desc = "Show basic cmp status" })
+
+    vim.api.nvim_create_user_command("CmpToggle", function()
+        cmp_enabled = not cmp_enabled
+        vim.notify("cmp " .. (cmp_enabled and "enabled" or "disabled"), vim.log.levels.INFO)
+    end, { desc = "Toggle nvim-cmp" })
 end
 
 return M

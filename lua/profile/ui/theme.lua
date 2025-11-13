@@ -30,14 +30,6 @@ local theme_configs = {
             },
         })
     end,
-    ["nightfox"] = function()
-        require("nightfox").setup({
-            options = {
-                transparent = true,
-                terminal_colors = true,
-            },
-        })
-    end,
 }
 
 function M.setup()
@@ -46,7 +38,17 @@ function M.setup()
     if theme_configs[default_theme] then
         theme_configs[default_theme]()
     end
-    
+
+    -- Set modern UI elements
+    vim.opt.termguicolors = true
+    vim.opt.cursorline = true
+    vim.opt.number = true
+    vim.opt.relativenumber = true
+    vim.opt.numberwidth = 4
+    vim.opt.winblend = 0
+    vim.opt.pumblend = 0
+    vim.opt.laststatus = 3
+
     vim.cmd("colorscheme " .. default_theme)
 
     ----------------------------------------------------------------------
@@ -85,6 +87,11 @@ function M.setup()
         vim.api.nvim_set_hl(0, "CmpNormal", bg_none)
         vim.api.nvim_set_hl(0, "CmpBorder", border)
         vim.api.nvim_set_hl(0, "CmpCursorLine", bg_select)
+        -- Backwards-compatible names used by some configs
+        vim.api.nvim_set_hl(0, "CmpPmenu", bg_none)
+        vim.api.nvim_set_hl(0, "CmpSel", bg_select)
+        -- Ghost text used by cmp experimental feature
+        vim.api.nvim_set_hl(0, "CmpGhostText", { fg = "#6b7089", italic = true, bg = "NONE" })
         vim.api.nvim_set_hl(0, "CmpDocNormal", bg_none)
         vim.api.nvim_set_hl(0, "CmpDocBorder", border)
         vim.api.nvim_set_hl(0, "CmpDocCursor", bg_select)
@@ -171,22 +178,20 @@ end
 function M.toggle()
     local cur = vim.g.colors_name
     local next_theme
-    
+
     if cur == "onedark" then
-        next_theme = "nightfox"
-    elseif cur == "nightfox" then
         next_theme = "tokyonight"
     elseif cur == "tokyonight" then
         next_theme = "rose-pine"
     else
         next_theme = "onedark"
     end
-    
+
     -- Setup theme if not already configured
     if theme_configs[next_theme] then
         theme_configs[next_theme]()
     end
-    
+
     vim.cmd("colorscheme " .. next_theme)
 end
 
