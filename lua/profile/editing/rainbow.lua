@@ -6,7 +6,7 @@ function M.setup()
 		return
 	end
 
-	-- Configure rainbow delimiters for all languages
+	-- Configure rainbow delimiters with performance optimizations
 	vim.g.rainbow_delimiters = {
 		strategy = {
 			[''] = rainbow_delimiters.strategy['global'],
@@ -16,17 +16,6 @@ function M.setup()
 		query = {
 			[''] = 'rainbow-delimiters',
 			lua = 'rainbow-blocks',
-			javascript = 'rainbow-delimiters',
-			typescript = 'rainbow-delimiters',
-			tsx = 'rainbow-delimiters',
-			python = 'rainbow-delimiters',
-			go = 'rainbow-delimiters',
-			rust = 'rainbow-delimiters',
-			java = 'rainbow-delimiters',
-			c = 'rainbow-delimiters',
-			cpp = 'rainbow-delimiters',
-			php = 'rainbow-delimiters',
-			zig = 'rainbow-delimiters',
 		},
 		priority = {
 			[''] = 110,

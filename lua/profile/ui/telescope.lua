@@ -13,6 +13,32 @@ function M.setup()
 				"target/",
 				"build/",
 				"%.class",
+				".venv",
+				"vendor/",
+				"dist/",
+				"%.o$",
+			},
+			layout_strategy = "horizontal",
+			layout_config = {
+				horizontal = {
+					preview_width = 0.6,
+				},
+			},
+			vimgrep_arguments = {
+				"rg",
+				"--color=never",
+				"--no-heading",
+				"--with-filename",
+				"--line-number",
+				"--column",
+				"--smart-case",
+				"--max-count=500",
+			},
+		},
+		pickers = {
+			find_files = {
+				find_command = { "fd", "--type", "f", "--strip-cwd-prefix" },
+				hidden = true,
 			},
 		},
 	})

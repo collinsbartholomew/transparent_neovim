@@ -229,7 +229,7 @@ function M.setup()
         extensions = {},
     })
 
-    local function make_transparent_borders()
+    vim.defer_fn(function()
         local modes = { 'normal', 'insert', 'visual', 'replace', 'command' }
         local sections = { 'a', 'b', 'c', 'x', 'y', 'z' }
         for _, mode in ipairs(modes) do
@@ -237,9 +237,7 @@ function M.setup()
                 vim.cmd(string.format('highlight lualine_%s_%s ctermbg=NONE guibg=NONE', section, mode))
             end
         end
-    end
-
-    vim.defer_fn(make_transparent_borders, 100)
+    end, 100)
 end
 
 return M

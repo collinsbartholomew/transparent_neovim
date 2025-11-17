@@ -43,19 +43,8 @@ function M.on_attach(client, bufnr)
     -- Enable completion triggered by <c-x><c-o>
     vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
 
-    -- Enable signature help
-    local has_signature, signature = pcall(require, "lsp_signature")
-    if has_signature then
-        signature.on_attach({
-            bind = true,
-            handler_opts = {
-                border = "rounded",
-            },
-        }, bufnr)
-    end
-
     -- Disable formatting for certain clients (use null-ls/conform.nvim instead)
-    if client.name == "tsserver" or client.name == "lua_ls" then
+    if client.name == "ts_ls" or client.name == "lua_ls" then
         client.server_capabilities.documentFormattingProvider = false
         client.server_capabilities.documentRangeFormattingProvider = false
     end

@@ -308,8 +308,8 @@ return {
 		event = "BufReadPost",
 		config = function()
 			require("illuminate").configure({
-				delay = 200,
-				large_file_cutoff = 1000,  -- Don't illuminate files with more than 1000 lines
+				delay = 250,
+				large_file_cutoff = 2000,  -- Don't illuminate files with more than 2000 lines
 				large_file_overrides = {
 					providers = { "lsp" },  -- Only use LSP for large files
 				},

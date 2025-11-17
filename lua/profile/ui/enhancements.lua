@@ -56,17 +56,9 @@ function M.setup()
         '═════════════════════════════════════════════════════════════════',
     }
 
-    -- Build safe config: prefer dashboard.config, then dashboard.opts (only if tables)
-    local config = nil
-    if type(dashboard.config) == 'table' then
-        config = vim.deepcopy(dashboard.config)
-    elseif type(dashboard.opts) == 'table' then
-        config = vim.deepcopy(dashboard.opts)
-    end
-
-    -- Try to setup alpha safely; if it errors, fall back to minimal config
-    local ok_setup, err = pcall(function()
-        alpha.setup(config)
+    -- Setup alpha with dashboard config
+    pcall(function()
+        alpha.setup(dashboard.config)
     end)
 
     vim.api.nvim_create_autocmd('User', {
@@ -103,30 +95,14 @@ function M.setup()
     vim.api.nvim_create_autocmd('VimEnter', {
         desc = 'Show alpha dashboard on startup',
         callback = function()
-            local should_skip = false
-            local is_dir = false
-            
             if vim.fn.argc() > 0 then
-                local arg = vim.fn.argv(0)
-                should_skip = vim.fn.filereadable(arg) == 1
-                is_dir = vim.fn.isdirectory(arg) == 1
+                return
             end
             
-            if not should_skip then
-                vim.schedule(function()
-                    if is_dir then
-                        vim.cmd('cd ' .. vim.fn.fnameescape(vim.fn.argv(0)))
-                        vim.cmd('Neotree show left')
-                        vim.defer_fn(function()
-                            vim.cmd('wincmd l')
-                            vim.cmd('Alpha')
-                        end, 50)
-                    else
-                        require('alpha').start(true, require('alpha').default_config)
-                    end
-                    vim.cmd('set showtabline=0 | set laststatus=3')
-                end)
-            end
+            vim.schedule(function()
+                require('alpha').start(true, require('alpha').default_config)
+                vim.cmd('set showtabline=0 | set laststatus=3')
+            end)
         end,
         nested = true,
     })
@@ -142,23 +118,6 @@ function M.setup()
     vim.keymap.set('n', '<leader>A', function()
         require('alpha').start()
     end, { noremap = true, silent = true, desc = 'Show alpha screen' })
-
-    -- Prevent scrolling in alpha buffer: map to <Nop>
-    vim.api.nvim_create_autocmd('FileType', {
-        pattern = 'alpha',
-        callback = function(event)
-            local b = event.buf
-            pcall(function()
-                vim.api.nvim_buf_set_keymap(b, 'n', '<ScrollWheelUp>', '<Nop>', { noremap = true, silent = true })
-                vim.api.nvim_buf_set_keymap(b, 'n', '<ScrollWheelDown>', '<Nop>', { noremap = true, silent = true })
-                vim.keymap.set('n', 'j', '<Nop>', { buffer = b, noremap = true, silent = true })
-                vim.keymap.set('n', 'k', '<Nop>', { buffer = b, noremap = true, silent = true })
-                vim.keymap.set('n', '<C-u>', '<Nop>', { buffer = b, noremap = true, silent = true })
-                vim.keymap.set('n', '<C-d>', '<Nop>', { buffer = b, noremap = true, silent = true })
-                vim.opt_local.scrolloff = 0
-            end)
-        end,
-    })
 end
 
 return M

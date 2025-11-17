@@ -44,6 +44,19 @@ for _, config in ipairs(indent_settings) do
 	})
 end
 
+-- Smart wrap settings for specific filetypes
+api.nvim_create_autocmd('FileType', {
+	group = profile_augroup,
+	pattern = { 'markdown', 'txt', 'tex', 'gitcommit' },
+	callback = function()
+		vim.opt_local.wrap = true
+		vim.opt_local.linebreak = true
+		vim.opt_local.breakindent = true
+		vim.opt_local.breakindentopt = 'shift:2'
+		vim.opt_local.showbreak = '↪ '
+	end,
+})
+
 api.nvim_create_autocmd("TextYankPost", {
 	group = profile_augroup,
 	callback = function()
@@ -55,11 +68,17 @@ api.nvim_create_autocmd("TextYankPost", {
 api.nvim_create_autocmd("BufWritePre", {
     group = profile_augroup,
     callback = function(ev)
-        -- Remove trailing whitespace only for normal files
-        if not vim.bo[ev.buf].binary and vim.bo[ev.buf].filetype ~= '' 
-           and not vim.tbl_contains({'markdown', 'text'}, vim.bo[ev.buf].filetype) then
+        -- Remove trailing whitespace only for specific filetypes
+        local ft = vim.bo[ev.buf].filetype
+        local skip_trailing = {
+            markdown = true,
+            text = true,
+            [""] = true,
+        }
+        
+        if not skip_trailing[ft] and not vim.bo[ev.buf].binary then
             local save_cursor = vim.fn.getpos('.')
-            vim.cmd([[%s/\s\+$//e]])
+            pcall(vim.cmd, [[%s/\s\+$//e]])
             vim.fn.setpos('.', save_cursor)
         end
         

@@ -6,7 +6,6 @@ local M = {}
 function M.setup()
     local ok, wk = pcall(require, 'which-key')
     if not ok then
-        vim.notify('which-key.nvim is not available', vim.log.levels.WARN)
         return
     end
 
@@ -21,8 +20,8 @@ function M.setup()
             border = 'rounded',
             padding = { 2, 2, 2, 2 },
         },
-        show_help = false,  -- Disable help to reduce visual clutter
-        show_keys = true,   -- Keep keys visible
+        show_help = false,
+        show_keys = true,
         win = {
             no_overlap = true,
             padding = { 1, 1 },
@@ -54,20 +53,6 @@ function M.setup()
             ellipsis = '…',
             mappings = true,
             colors = true,
-            rules = {},
-        },
-        spec = {},
-        replace = {
-            desc = {
-                { '<Plug>%(.-%)', '' },
-                { '^%^', '' },
-                { '<[cC]md>', '' },
-                { '<[cC]r>', '' },
-                { '<[sS]ilent>', '' },
-                { '^lua ', '' },
-                { '^call ', '' },
-                { '^:%s*', '' },
-            },
         },
         show_disabled = false,
         disable = {

@@ -16,15 +16,11 @@ function M.setup()
         install_info = {
             url = "https://github.com/polychromatist/tree-sitter-motoko.git",
             files = { "src/parser.c", "src/scanner.c" },
-            -- Use the query files from helix-queries in the repo
             generate_requires_npm = false,
             requires_generate_from_grammar = false,
             branch = "main",
         },
         filetype = "motoko",
-        -- Point treesitter to use queries from the parser repo's helix-queries folder
-        -- This ensures we get the official Motoko syntax highlighting
-        query_path = vim.fn.stdpath("data") .. "/treesitter-parsers/tree-sitter-motoko/helix-queries",
     }
 
     local ts_context_ok, ts_context = pcall(require, "ts_context_commentstring")
@@ -44,89 +40,97 @@ function M.setup()
         sync_install = false,
         auto_install = true,
         ignore_install = {},
-        -- Playground for debugging and learning Tree-sitter parsers
-        playground = {
-            enable = true,
-            disable = {},
-            updatetime = 25,
-            persist_queries = false,
-            keybindings = {
-                toggle_query_editor = "o",
-                toggle_hl_groups = "i",
-                toggle_injected_languages = "t",
-                toggle_anonymous_nodes = "a",
-                toggle_language_display = "I",
-                focus_language = "f",
-                unfocus_language = "F",
-                update = "R",
-                goto_node = "<cr>",
-                show_help = "?",
-            },
-        },
-        -- Parser configuration
         parser_install_dir = parser_dir,
-        parser_configs = {
-            rust = {
-                filter_allowlist = { "rust", "toml" },
-            },
-            lua = {
-                filter_allowlist = { "lua" },
-            },
-        },
-        -- Refactor module for advanced refactoring capabilities
-        refactor = {
-            highlight_definitions = {
-                enable = true,
-                clear_on_cursor_move = false,
-            },
-            highlight_references = {
-                enable = true,
-                terms_to_highlight = { "@@" },
-            },
-            smart_rename = {
-                enable = true,
-                keymaps = {
-                    smart_rename = "grr",
-                },
-            },
-            navigation = {
-                enable = true,
-                keymaps = {
-                    goto_definition = "gnd",
-                    list_definitions = "gnD",
-                    list_definitions_toc = "gO",
-                    goto_next_usage = "<a-*>",
-                    goto_previous_usage = "<a-#>",
-                },
-            },
-            auto_rename = {
-                enable = false,
-                exclude = {},
-            },
-            prompt_telescope = {
-                enable = true,
-                initial_mode = "insert",
-            },
-        },
-        -- Enable folding via treesitter (this is now handled by ufo)
-        fold = { enable = false },
+        
         -- Enhanced syntax highlighting configuration
         highlight = {
             enable = true,
-            disable = {},
+            disable = function(lang, bufnr)
+                -- Disable highlighting for very large files
+                local max_filesize = 100 * 1024 -- 100 KB
+                local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(bufnr))
+                if ok and stats and stats.size > max_filesize then
+                    return true
+                end
+                return false
+            end,
             additional_vim_regex_highlighting = false,
             use_languagetree = true,
-            custom_captures = {},
-            indent = { enable = true },
-            -- Performance optimizations
-            max_file_lines = 50000,
-            -- Modern features
-            rainbow = {
-                enable = true,
-                extended_mode = true,
-                max_file_lines = 2000,
+        },
+        
+        indent = {
+            enable = true,
+            disable = { "yaml" }, -- YAML indentation breaks with treesitter
+        },
+        
+        incremental_selection = {
+            enable = true,
+            keymaps = {
+                init_selection = "<CR>",
+                node_incremental = "<CR>",
+                scope_incremental = "<S-CR>",
+                node_decremental = "<BS>",
             },
         },
+        
+        textobjects = {
+            select = {
+                enable = true,
+                lookahead = true,
+                keymaps = {
+                    ["af"] = "@function.outer",
+                    ["if"] = "@function.inner",
+                    ["ac"] = "@class.outer",
+                    ["ic"] = "@class.inner",
+                    ["as"] = "@statement.outer",
+                    ["is"] = "@statement.inner",
+                    ["ab"] = "@block.outer",
+                    ["ib"] = "@block.inner",
+                    ["al"] = "@loop.outer",
+                    ["il"] = "@loop.inner",
+                    ["ai"] = "@conditional.outer",
+                    ["ii"] = "@conditional.inner",
+                    ["ap"] = "@parameter.outer",
+                    ["ip"] = "@parameter.inner",
+                },
+                selection_modes = {
+                    ["@parameter.outer"] = "v",
+                    ["@function.outer"] = "V",
+                    ["@class.outer"] = "V",
+                },
+                include_surrounding_whitespace = false,
+            },
+            move = {
+                enable = true,
+                set_jumps = true,
+                goto_next_start = {
+                    ["]m"] = "@function.outer",
+                    ["]]"] = "@class.outer",
+                },
+                goto_next_end = {
+                    ["]M"] = "@function.outer",
+                    ["]["] = "@class.outer",
+                },
+                goto_previous_start = {
+                    ["[m"] = "@function.outer",
+                    ["[["] = "@class.outer",
+                },
+                goto_previous_end = {
+                    ["[M"] = "@function.outer",
+                    ["[]"] = "@class.outer",
+                },
+            },
+            swap = {
+                enable = true,
+                swap_next = {
+                    ["<leader>sp"] = "@parameter.inner",
+                },
+                swap_previous = {
+                    ["<leader>sP"] = "@parameter.inner",
+                },
+            },
+        },
+        
         ensure_installed = {
             "lua",
             "vim",
@@ -162,93 +166,7 @@ function M.setup()
             "git_rebase",
             "gitcommit",
             "query",
-            "comment",
-        },
-        sync_install = false,
-        auto_install = true,
-        ignore_install = {},
-        indent = {
-            enable = true,
-            disable = {},
-        },
-        incremental_selection = {
-            enable = true,
-            keymaps = {
-                init_selection = "<CR>",
-                node_incremental = "<CR>",
-                scope_incremental = "<S-CR>",
-                node_decremental = "<BS>",
-            },
-        },
-        textobjects = {
-            select = {
-                enable = true,
-                lookahead = true,
-                keymaps = {
-                    ["af"] = "@function.outer",
-                    ["if"] = "@function.inner",
-                    ["ac"] = "@class.outer",
-                    ["ic"] = "@class.inner",
-                    ["as"] = "@statement.outer",
-                    ["is"] = "@statement.inner",
-                    ["ab"] = "@block.outer",
-                    ["ib"] = "@block.inner",
-                    ["al"] = "@loop.outer",
-                    ["il"] = "@loop.inner",
-                    ["ai"] = "@conditional.outer",
-                    ["ii"] = "@conditional.inner",
-                    ["ap"] = "@parameter.outer",
-                    ["ip"] = "@parameter.inner",
-                },
-                selection_modes = {
-                    ["@parameter.outer"] = "v",
-                    ["@function.outer"] = "V",
-                    ["@class.outer"] = "V",
-                },
-                include_surrounding_whitespace = false,
-            },
-            select = {
-                enable = true,
-                lookahead = true,
-                keymaps = {
-                    ["af"] = "@function.outer",
-                    ["if"] = "@function.inner",
-                    ["ac"] = "@class.outer",
-                    ["ic"] = "@class.inner",
-                    ["ab"] = "@block.outer",
-                    ["ib"] = "@block.inner",
-                },
-            },
-            move = {
-                enable = true,
-                set_jumps = true,
-                goto_next_start = {
-                    ["]m"] = "@function.outer",
-                    ["]]"] = "@class.outer",
-                },
-                goto_next_end = {
-                    ["]M"] = "@function.outer",
-                    ["]["] = "@class.outer",
-                },
-                goto_previous_start = {
-                    ["[m"] = "@function.outer",
-                    ["[["] = "@class.outer",
-                },
-                goto_previous_end = {
-                    ["[M"] = "@function.outer",
-                    ["[]"] = "@class.outer",
-                },
-            },
-            swap = {
-                enable = true,
-                swap_next = {
-                    ["<leader>sp"] = "@parameter.inner",
-                },
-                swap_previous = {
-                    ["<leader>sP"] = "@parameter.inner",
-                },
-            },
-        },
+            "comment",        },
     })
 end
 

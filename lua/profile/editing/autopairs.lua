@@ -8,7 +8,7 @@ function M.setup()
 
 	autopairs.setup({
 		check_ts = true,
-		disable_filetype = { "TelescopePrompt", "spectre_panel", "toggleterm" },
+		disable_filetype = { "TelescopePrompt", "spectre_panel", "toggleterm", "lazy", "mason" },
 		fast_wrap = {
 			map = "<M-e>",
 			chars = { "{", "[", "(", '"', "'" },
@@ -24,11 +24,7 @@ function M.setup()
 		local cmp_autopairs_ok, cmp_autopairs = pcall(require, "nvim-autopairs.completion.cmp")
 		if cmp_autopairs_ok then
 			cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
-		else
-			vim.notify("nvim-autopairs cmp integration not available", vim.log.levels.WARN)
 		end
-	else
-		vim.notify("nvim-cmp not available for autopairs integration", vim.log.levels.WARN)
 	end
 end
 

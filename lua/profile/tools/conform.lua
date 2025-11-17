@@ -19,13 +19,13 @@ function M.setup()
     conform.setup({
         formatters_by_ft = {
             lua = { "stylua" },
-            python = { "ruff_format", "black", "isort" },
+            python = { "ruff_format" },
             java = { "google-java-format" },
             javascript = { "prettier" },
             typescript = { "prettier" },
             javascriptreact = { "prettier" },
             typescriptreact = { "prettier" },
-            go = { "goimports", "gofumpt" },
+            go = { "goimports" },
             html = { "prettier" },
             css = { "prettier" },
             scss = { "prettier" },
@@ -37,6 +37,8 @@ function M.setup()
             vue = { "prettier" },
             svelte = { "prettier" },
             astro = { "prettier" },
+            xml = { "prettier_xml" },
+            xhtml = { "prettier_xml" },
             c = { "clang-format" },
             cpp = { "clang-format" },
             cuda = { "clang-format" },
@@ -60,8 +62,8 @@ function M.setup()
             asm = { "asmfmt" },
             nasm = { "asmfmt" },
             gas = { "asmfmt" },
-            php = { "phpcbf", "php_cs_fixer" },
-            motoko = { "mo_fmt", "motoko_prettier", stop_after_first = true },
+            php = { "phpcbf" },
+            motoko = { "prettier_motoko" },
             ["_"] = { "trim_whitespace", "trim_newlines" },
         },
         format_on_save = {
@@ -70,10 +72,18 @@ function M.setup()
         },
         formatters = {
             prettier = {
-                prepend_args = { "--print-width", "120", "--prose-wrap", "preserve" },
+                prepend_args = { "--print-width", "120", "--prose-wrap", "preserve", "--tab-width", "4" },
+            },
+            prettier_xml = {
+                command = "prettier",
+                prepend_args = { "--print-width", "120", "--prose-wrap", "preserve", "--tab-width", "3" },
+            },
+            prettier_motoko = {
+                command = "prettier",
+                prepend_args = { "--print-width", "120", "--prose-wrap", "preserve", "--tab-width", "4", "--plugin", "prettier-plugin-motoko" },
             },
             ["clang-format"] = {
-                prepend_args = { "--style=file" },
+                prepend_args = { "--style={IndentWidth: 4, UseTab: ForIndentation}" },
             },
             rustfmt = {},
             shfmt = {
@@ -102,29 +112,6 @@ function M.setup()
             goimports = {},
             ["google-java-format"] = {
                 args = { "-" },
-            },
-            mo_fmt = {
-                command = "mo-fmt",
-                args = { "-" },
-                stdin = true,
-                condition = function()
-                    return executable("mo-fmt")
-                end,
-            },
-            motoko_prettier = {
-                command = "prettier",
-                args = { "--stdin-filepath", "$FILENAME", "--parser", "motoko", "--plugin", "prettier-plugin-motoko" },
-                stdin = true,
-                condition = function(_, ctx)
-                    local dirname = ctx.dirname or vim.fn.getcwd()
-                    if has_node_module(dirname, "prettier-plugin-motoko/package.json") then
-                        return true
-                    end
-                    local global_root = vim.trim(vim.fn.system("npm root -g"))
-                    return global_root ~= ""
-                        and has_node_module(global_root, "prettier-plugin-motoko/package.json")
-                        and executable("prettier")
-                end,
             },
             asmfmt = {},
             phpcbf = {

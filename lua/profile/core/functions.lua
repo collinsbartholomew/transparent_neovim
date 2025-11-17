@@ -3,16 +3,14 @@ local M = {}
 
 -- Toggle diagnostics
 function M.toggle_diagnostics()
-	if vim.g.diagnostics_enabled == nil then
-		vim.g.diagnostics_enabled = true
-	end
-	vim.g.diagnostics_enabled = not vim.g.diagnostics_enabled
+	vim.g.diagnostics_enabled = not (vim.g.diagnostics_enabled or true)
 	if vim.g.diagnostics_enabled then
 		vim.diagnostic.enable()
+		vim.notify("Diagnostics enabled", vim.log.levels.INFO)
 	else
 		vim.diagnostic.enable(false)
+		vim.notify("Diagnostics disabled", vim.log.levels.INFO)
 	end
-	print("Diagnostics " .. (vim.g.diagnostics_enabled and "enabled" or "disabled"))
 end
 
 -- Generic tool checker function
@@ -49,16 +47,11 @@ end
 -- Check if required tools for assembly development are installed
 function M.check_asm_tools()
 	local tools = {
-		{ name = "asm-lsp",  cmd = "asm-lsp" },
 		{ name = "nasm",     cmd = "nasm" },
 		{ name = "as (GAS)", cmd = "as" },
 		{ name = "ld",       cmd = "ld" },
 		{ name = "gdb",      cmd = "gdb" },
 		{ name = "objdump",  cmd = "objdump" },
-		{ name = "readelf",  cmd = "readelf" },
-		{ name = "checksec", cmd = "checksec" },
-		{ name = "valgrind", cmd = "valgrind" },
-		{ name = "asmfmt",   cmd = "asmfmt" },
 	}
 	check_tools("Assembly", tools)
 end
@@ -101,53 +94,6 @@ function M.asm_run()
 	else
 		vim.notify("Not an assembly file", vim.log.levels.WARN)
 	end
-end
-
--- Check if required tools for C++ development are installed
-function M.check_cpp_tools()
-	local tools = {
-		{ name = "clangd",       cmd = "clangd" },
-		{ name = "clang-tidy",   cmd = "clang-tidy" },
-		{ name = "clang-format", cmd = "clang-format" },
-		{ name = "cppcheck",     cmd = "cppcheck" },
-		{ name = "gdb",          cmd = "gdb" },
-		{ name = "lldb",         cmd = "lldb" },
-		{ name = "codelldb",     cmd = "codelldb" },
-		{ name = "cmake",        cmd = "cmake" },
-		{ name = "bear",         cmd = "bear" },
-		{ name = "valgrind",     cmd = "valgrind" },
-		{ name = "qmlls",        cmd = "qmlls" },
-		{ name = "qmllint",      cmd = "qmllint" },
-		{ name = "qmlscene",     cmd = "qmlscene" },
-	}
-	check_tools("C/C++", tools)
-end
-
--- Check if required tools for Rust development are installed
-function M.check_rust_tools()
-	local tools = {
-		{ name = "rust-analyzer",  cmd = "rust-analyzer" },
-		{ name = "rustc",          cmd = "rustc" },
-		{ name = "cargo",          cmd = "cargo" },
-		{ name = "rustfmt",        cmd = "rustfmt" },
-		{ name = "clippy",         cmd = "clippy" },
-		{ name = "codelldb",       cmd = "codelldb" },
-		{ name = "cargo-audit",    cmd = "cargo-audit" },
-		{ name = "cargo-expand",   cmd = "cargo-expand" },
-		{ name = "cargo-valgrind", cmd = "cargo-valgrind" },
-		{ name = "cargo-llvm-cov", cmd = "cargo-llvm-cov" },
-	}
-	check_tools("Rust", tools)
-end
-
--- Check if required tools for Zig development are installed
-function M.check_zig_tools()
-	local tools = {
-		{ name = "zls",      cmd = "zls" },
-		{ name = "zig",      cmd = "zig" },
-		{ name = "codelldb", cmd = "codelldb" },
-	}
-	check_tools("Zig", tools)
 end
 
 -- Reload a Lua module by clearing it from package.loaded

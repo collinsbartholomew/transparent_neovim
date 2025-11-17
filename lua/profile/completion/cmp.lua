@@ -89,7 +89,7 @@ function M.setup()
                                 -- keep unnamed buffers
                                 bufs[b] = true
                             else
-                                local ok, stat = pcall(vim.loop.fs_stat, fname)
+                                local ok, stat = pcall(vim.uv.fs_stat, fname)
                                 if ok and stat and stat.size and stat.size < max_size then
                                     bufs[b] = true
                                 end
@@ -211,7 +211,7 @@ function M.setup()
         sources = (function()
             local max_size = 1024 * 1024 -- 1MB
             local file_size = nil
-            local ok, stat = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(0))
+            local ok, stat = pcall(vim.uv.fs_stat, vim.api.nvim_buf_get_name(0))
             if ok and stat and stat.size then
                 file_size = stat.size
             end

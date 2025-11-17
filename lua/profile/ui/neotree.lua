@@ -2,7 +2,6 @@
 local M = {}
 
 function M.setup()
-	-- Ensure required dependencies are loaded first
 	local status_ok, neo_tree = pcall(require, "neo-tree")
 	if not status_ok then
 		return
@@ -24,14 +23,13 @@ function M.setup()
 				["<space>"] = "none",
 			},
 		},
-
 		filesystem = {
 			filtered_items = {
-				visible = true, -- Show all files
-				hide_dotfiles = false, -- Don't hide dotfiles
-				hide_gitignored = false, -- Don't hide gitignored files
-				hide_hidden = false, -- Don't hide hidden files
-				never_show = {}, -- Don't hide any files
+				visible = true,
+				hide_dotfiles = false,
+				hide_gitignored = false,
+				hide_hidden = false,
+				never_show = { ".DS_Store", "thumbs.db" },
 			},
 			follow_current_file = true,
 			group_empty_dirs = false,
