@@ -278,6 +278,12 @@ function M.setup()
         { '<leader>ha', "<cmd>lua require('harpoon.mark').add_file()<cr>", desc = 'Add file' },
         { '<leader>fj', "<cmd>lua require('flash').jump()<cr>", desc = 'Flash jump' },
         { '<leader>ft', "<cmd>lua require('flash').treesitter()<cr>", desc = 'Flash treesitter' },
+        -- Qt/QML development
+        { '<leader>q', group = 'Qt' },
+        { '<leader>qb', '<cmd>QtBuild<cr>', desc = 'Build' },
+        { '<leader>qr', '<cmd>QtRun<cr>', desc = 'Run' },
+        { '<leader>qh', '<cmd>QtHotReload<cr>', desc = 'Hot reload' },
+        { '<leader>qc', '<cmd>QtCompdb<cr>', desc = 'Compile DB' },
     })
 
     -- Window navigation, text movement, and utilities

@@ -37,6 +37,7 @@ local ENSURE_INSTALLED_LSPS = {
     "marksman",
     "ltex",
     "motoko_lsp", -- Added Motoko LSP
+    "qmlls", -- Qt/QML LSP
 }
 
 -- Useful development/debug tools (kept conservative)

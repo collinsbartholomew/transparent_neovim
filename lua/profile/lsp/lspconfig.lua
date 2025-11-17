@@ -145,6 +145,31 @@ local function server_overrides(server_name)
             },
             init_options = { userLanguages = { eelixir = "html-eex", eruby = "erb" } },
         },
+        qmlls = {
+            filetypes = { "qml", "qmljs" },
+            root_dir = function(fname)
+                return vim.fn.getcwd()
+            end,
+            settings = {
+                qml = {
+                    import_dirs = { ".", "./imports" },
+                },
+            },
+        },
+        clangd = {
+            cmd = {
+                "clangd",
+                "--background-index",
+                "--clang-tidy",
+                "--header-insertion=iwyu",
+                "--completion-style=detailed",
+                "--function-arg-placeholders=false",
+            },
+            init_options = {
+                fallbackFlags = { "-std=c++17", "-fPIC" },
+                clangdFileStatus = true,
+            },
+        },
     }
     return overrides[server_name] or {}
 end

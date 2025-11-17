@@ -36,6 +36,10 @@ local lint = safe_require("profile.tools.lint")
 if lint and type(lint.setup) == "function" then
 	lint.setup()
 end
+local qt_tools = safe_require("profile.tools.qt")
+if qt_tools and type(qt_tools.setup) == "function" then
+	qt_tools.setup()
+end
 
 -- Load UI components
 local theme = safe_require("profile.ui.theme")
@@ -69,13 +73,4 @@ end
 local completion = safe_require("profile.completion")
 if completion and type(completion.setup) == "function" then
 	completion.setup()
-end
-
--- Load language-specific configurations
-local languages_path = package.searchpath("profile.languages", package.path)
-if languages_path then
-	local languages = safe_require("profile.languages")
-	if languages and type(languages.setup) == "function" then
-		languages.setup()
-	end
 end

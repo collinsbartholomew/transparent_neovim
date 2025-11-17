@@ -89,9 +89,10 @@ function M.setup()
             args = { "debug_adapter" },
         }
     end
-    -- Zig (reuse codelldb if available)
+    -- Zig and Qt/C++ (use codelldb)
     if dap.adapters.codelldb then
         dap.adapters.zig = dap.adapters.codelldb
+        dap.adapters.cpp = dap.adapters.codelldb
     end
 end
 
