@@ -15,7 +15,16 @@
         "*.xhtml",
         "*.vue",
         "*.svelte",
-        "*.astro"
+        "*.astro",
+        "*.css",
+        "*.scss",
+        "*.less",
+        "*.json",
+        "*.jsonc",
+        "*.yaml",
+        "*.yml",
+        "*.md",
+        "*.mdx"
       ],
       "options": {
         "tabWidth": 3

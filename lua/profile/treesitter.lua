@@ -30,6 +30,15 @@ function M.setup()
         })
     end
 
+    -- Modern fs_stat helper (Neovim 0.9+)
+    local function safe_fs_stat(path)
+        if not path or path == "" then
+            return nil
+        end
+        local ok, stat = pcall(vim.uv.fs_stat, path)
+        return ok and stat or nil
+    end
+
     -- Setup additional treesitter modules
     local status_ok, configs = pcall(require, "nvim-treesitter.configs")
     if not status_ok then
@@ -38,7 +47,8 @@ function M.setup()
 
     configs.setup({
         sync_install = false,
-        auto_install = true,
+        -- Keep installation explicit to reduce startup IO
+        auto_install = false,
         ignore_install = {},
         parser_install_dir = parser_dir,
         
@@ -46,10 +56,10 @@ function M.setup()
         highlight = {
             enable = true,
             disable = function(lang, bufnr)
-                -- Disable highlighting for very large files
-                local max_filesize = 100 * 1024 -- 100 KB
-                local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(bufnr))
-                if ok and stats and stats.size > max_filesize then
+                -- Disable highlighting for very large files to preserve responsiveness
+                    local max_filesize = 1024 * 1024 -- 1 MB
+                local stats = safe_fs_stat(vim.api.nvim_buf_get_name(bufnr))
+                if stats and stats.size and stats.size > max_filesize then
                     return true
                 end
                 return false
@@ -132,6 +142,7 @@ function M.setup()
         },
         
         ensure_installed = {
+            -- Essential for most projects
             "lua",
             "vim",
             "python",
@@ -140,7 +151,8 @@ function M.setup()
             "tsx",
             "html",
             "css",
-            "motoko",
+            
+            -- Common dev languages
             "java",
             "cpp",
             "c",
@@ -148,25 +160,27 @@ function M.setup()
             "regex",
             "rust",
             "go",
+            
+            -- Config files
             "yaml",
             "json",
             "toml",
             "markdown",
             "markdown_inline",
             "dockerfile",
+            
+            -- Version control
             "gitignore",
-            "php",
-            "blade",
-            "zig",
-            "dart",
-            "sql",
-            "scss",
-            "xml",
-            "diff",
             "git_rebase",
             "gitcommit",
-            "query",
-            "comment",        },
+            
+            -- Others
+            "php",
+            "sql",
+            "xml",
+            "diff",
+            "comment",
+        },
     })
 end
 

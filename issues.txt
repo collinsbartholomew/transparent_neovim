@@ -1,9 +1,0 @@
-i want you to go through my entire config and make improvements, analysis, bug fixes, cleanning up redundant and duplicate configs, removing unneccesary configurations and ones already handled by defaults, ensuring thall parts of the configs are functional and wont crash on usage, removing all deprecated configs. remove overconfigurations that could cause issues.
-
-
-
-11:45:04 AM msg_show.echo   Not 2025-11-09T11:44:25  WARN Failed to require('profile.core.options'): vim/_options.lua:0: E1511: Wrong number of characters for field "foldclose"
-11:45:04 AM msg_show.echo   Not 2025-11-09T11:44:25  WARN Failed to require('profile.tools.conform'): vim/loader.lua:0: /home/collins/.config/nvim/lua/profile/tools/conform.lua:78: ')' expected (to close '(' at line 10) near '='
-11:45:04 AM msg_show.echo   Not 2025-11-09T11:44:26  WARN Failed to load profile: vim/loader.lua:0: /home/collins/.config/nvim/lua/profile/lsp/mason.lua:93: 'end' expected (to close 'function' at line 38) near 'else'
-11:45:04 AM msg_show.echo   Not 2025-11-09T11:44:26 which-key.nvim  WARN There were issues reported with your **which-key** mappings.
-Use `:checkhealth which-key` to find out more.

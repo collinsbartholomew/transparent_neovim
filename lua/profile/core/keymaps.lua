@@ -3,11 +3,17 @@
 local M = {}
 
 function M.setup()
-    local wk = require('which-key')
+    local wk_ok, wk = pcall(require, 'which-key')
+    if not wk_ok then
+        vim.notify("which-key not loaded; keymaps setup deferred", vim.log.levels.WARN)
+        return
+    end
 
     --Define keymap groups for better organization
     wk.add({
+        { '<leader>a', group = 'ASM' }, -- Assembly development
         { '<leader>b', group = 'Buffer' }, -- Buffer management operations
+        { '<leader>c', group = 'C/C++' }, -- C/C++ development
         { '<leader>d', group = 'Debug' }, -- Debugging operations
         { '<leader>f', group = 'Find' }, -- File and content finding operations
         { '<leader>g', group = 'Git' }, -- Git operations
@@ -16,10 +22,11 @@ function M.setup()
         { '<leader>p', group = 'Project/Session' }, -- Project and session management
         { '<leader>r', group = 'Refactor' }, -- Code refactoring operations
         { '<leader>sr', group = 'Search/Replace' }, -- Search and replace operations
-        { '<leader>t', group = 'Test/Terminal/Toggle' }, -- Testing, terminal, and toggle operations
+        { '<leader>t', group = 'Test/Terminal/UI' }, -- Testing, terminal, and UI operations
         { '<leader>u', group = 'UI' }, -- User interface operations
         { '<leader>x', group = 'Trouble/Diagnostics' }, -- Diagnostic and trouble operations
         { '<leader>y', group = 'UI/Theme' }, -- UI theme operations
+        { '<leader>z', group = 'Zig' }, -- Zig development
     })
 
     -- Buffer, window and tab management
@@ -94,6 +101,7 @@ function M.setup()
         -- LSP actions
         wk.add({
             { '<leader>la', vim.lsp.buf.code_action, desc = 'Code action' },
+            { '<leader>ld', '<cmd>lua vim.diagnostic.open_float()<cr>', desc = 'Line Diagnostics' },
             { '<leader>lf', function() vim.lsp.buf.format({ async = true }) end, desc = 'Format' },
             { '<leader>lr', vim.lsp.buf.rename, desc = 'Rename' },
             { '<leader>ls', vim.lsp.buf.signature_help, desc = 'Signature help' },
@@ -241,7 +249,7 @@ function M.setup()
 
     -- Testing operations
     wk.add({
-        { '<leader>t', group = 'Test' },
+        { '<leader>t', group = 'Test/Terminal/UI' },
         { '<leader>ts', '<cmd>Neotest summary<cr>', desc = 'Test summary' },
         { '<leader>tr', '<cmd>Neotest run<cr>', desc = 'Run nearest test' },
         { '<leader>tf', '<cmd>Neotest run file<cr>', desc = 'Run test file' },
@@ -278,19 +286,16 @@ function M.setup()
         { '<leader>ha', "<cmd>lua require('harpoon.mark').add_file()<cr>", desc = 'Add file' },
         { '<leader>fj', "<cmd>lua require('flash').jump()<cr>", desc = 'Flash jump' },
         { '<leader>ft', "<cmd>lua require('flash').treesitter()<cr>", desc = 'Flash treesitter' },
-        -- Qt/QML development
-        { '<leader>q', group = 'Qt' },
-        { '<leader>qb', '<cmd>QtBuild<cr>', desc = 'Build' },
-        { '<leader>qr', '<cmd>QtRun<cr>', desc = 'Run' },
-        { '<leader>qh', '<cmd>QtHotReload<cr>', desc = 'Hot reload' },
-        { '<leader>qc', '<cmd>QtCompdb<cr>', desc = 'Compile DB' },
+        -- Qt/QML development (moved to <leader>Q to avoid conflict with quickfix)
+        { '<leader>Q', group = 'Qt' },
+        { '<leader>Qb', '<cmd>QtBuild<cr>', desc = 'Build' },
+        { '<leader>Qr', '<cmd>QtRun<cr>', desc = 'Run' },
+        { '<leader>Qh', '<cmd>QtHotReload<cr>', desc = 'Hot reload' },
+        { '<leader>Qc', '<cmd>QtCompdb<cr>', desc = 'Compile DB' },
     })
 
     -- Window navigation, text movement, and utilities
     wk.add({
-        -- Window resize keymaps moved to buffer/window section
-        { '<S-l>', ':bnext<CR>', desc = 'Next buffer' },
-        { '<S-h>', ':bprevious<CR>', desc = 'Previous buffer' },
         { '<A-j>', '<Esc>:m .+1<CR>==gi', desc = 'Move line down' },
         { '<A-k>', '<Esc>:m .-2<CR>==gi', desc = 'Move line up' },
         { 'J', ":move '>+1<CR>gv-gv", desc = 'Move selection down', mode = 'x' },
@@ -303,11 +308,9 @@ function M.setup()
         { '<leader>td', ":lua require('profile.core.functions').toggle_diagnostics()<CR>", desc = 'Toggle diagnostics' },
         { '<leader>tv', function() vim.diagnostic.config({ virtual_text = not vim.diagnostic.config().virtual_text }) end, desc = 'Toggle virtual text' },
         { '<leader>cf', function() require('conform').format({ async = true, lsp_fallback = true }) end, desc = 'Format code' },
-        { '<leader>a', group = 'ASM' },
-        { '<leader>atc', ":lua require('profile.core.functions').check_asm_tools()<CR>", desc = 'Check tools' },
-        { '<leader>arr', ":lua require('profile.core.functions').asm_run()<CR>", desc = 'Run' },
-        { '<leader>c', group = 'C/C++' },
-        { '<leader>ctc', ":lua require('profile.core.functions').check_cpp_tools()<CR>", desc = 'Check tools' },
+        { '<leader>atc', ":lua require('profile.core.functions').check_asm_tools()<CR>", desc = 'Check ASM tools' },
+        { '<leader>arr', ":lua require('profile.core.functions').asm_run()<CR>", desc = 'Run ASM' },
+        { '<leader>ctc', ":lua require('profile.core.functions').check_cpp_tools()<CR>", desc = 'Check C/C++ tools' },
         { '<leader>rtc', ":lua require('profile.core.functions').check_rust_tools()<CR>", desc = 'Check Rust tools' },
         { '<leader>ztc', ":lua require('profile.core.functions').check_zig_tools()<CR>", desc = 'Check Zig tools' },
     })

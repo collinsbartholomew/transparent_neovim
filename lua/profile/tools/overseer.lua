@@ -9,8 +9,8 @@ function M.setup()
 	overseer.setup({
 		task_list = {
 			direction = "bottom",
-			min_height = 25,
-			max_height = 40,
+			min_height = 15, -- Reduced from 25 for better screen usage
+			max_height = 30, -- Reduced from 40 for better screen usage
 			default_detail = 1,
 			bindings = {
 				["?"] = "actions.help",
@@ -38,14 +38,14 @@ function M.setup()
 			quit_on_exit = "success",
 			on_new_task = function(task) end,
 		},
-		templates = { "builtin", "user.makefile", "user.npm", "user.python" },
-		template_timeout = 5000,
+		templates = { "builtin" }, -- Simplified templates for better performance
+		template_timeout = 3000, -- Reduced from 5000 for better responsiveness
 		confirm = {
 			avail_templates = false,
 			notify = true,
 		},
 		always_show_dap = false,
-		preload_history = true,
+		preload_history = false, -- Disabled for performance
 		actions = {},
 	})
 
@@ -59,7 +59,7 @@ function M.setup()
 				components = {
 					{
 						"default",
-						timeout = 120,
+						timeout = 60, -- Reduced from 120 for better responsiveness
 						on_output_parse = vim.schedule_wrap(function(lines, info)
 							if info.code == 0 then
 								vim.notify("Python script ran successfully", vim.log.levels.INFO)

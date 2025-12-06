@@ -57,13 +57,15 @@ function M.on_attach(client, bufnr)
             buffer = bufnr,
             callback = vim.lsp.buf.document_highlight,
         })
-        vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+        vim.api.nvim_create_autocmd("CursorMoved", {
             group = group,
             buffer = bufnr,
             callback = vim.lsp.buf.clear_references,
         })
     end
+    
+    -- Disable semantic tokens for better performance
+    client.server_capabilities.semanticTokensProvider = nil
 end
 
 return M
-

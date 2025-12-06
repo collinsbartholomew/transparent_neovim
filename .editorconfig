@@ -11,7 +11,7 @@ trim_trailing_whitespace = true
 
 # Lua files
 [*.lua]
-indent_style = tab
+indent_style = space
 indent_size = 4
 
 # Python files
@@ -20,18 +20,18 @@ indent_style = space
 indent_size = 4
 
 # JavaScript/TypeScript files
-[*.{jsx,tsx,json}]
-indent_style = tab
+[*.{js,jsx,ts,tsx,json,jsonc}]
+indent_style = space
 indent_size = 3
 
-# HTML/CSS/XML
-[*.{html,htm,css,scss,less,xml}]
-indent_style = tab
+# HTML/CSS/XML and related
+[*.{html,htm,css,scss,less,xml,xhtml,svg,yaml,yml,md,markdown,mdx}]
+indent_style = space
 indent_size = 3
 
 # Shell scripts
 [*.{sh,bash,zsh}]
-indent_style = tab
+indent_style = space
 indent_size = 4
 
 # Go files
@@ -48,17 +48,3 @@ indent_size = 4
 [*.java]
 indent_style = space
 indent_size = 4
-
-# C/C++ files
-[*.{c,cpp,cc,h,hpp}]
-indent_style = tab
-indent_size = 4
-
-# PHP files
-[*.php]
-indent_style = space
-indent_size = 4
-
-# Markdown files
-[*.md]
-trim_trailing_whitespace = false

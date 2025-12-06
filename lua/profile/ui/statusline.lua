@@ -146,20 +146,39 @@ function M.setup()
                         local git_root_cache = {}
                         local last_check = {}
                         local cache_time = 5000  -- Cache git root for 5 seconds
-                        
+                        local pending_jobs = {}
+
+                        local function schedule_update(path)
+                            if pending_jobs[path] then
+                                return
+                            end
+                            pending_jobs[path] = true
+                            vim.fn.jobstart({ 'git', 'rev-parse', '--show-toplevel' }, {
+                                stdout_buffered = true,
+                                on_stdout = function(_, data)
+                                    pending_jobs[path] = nil
+                                    if data and data[1] and data[1] ~= '' then
+                                        git_root_cache[path] = data[1]
+                                        last_check[path] = vim.loop.now()
+                                    end
+                                end,
+                                on_stderr = function()
+                                    pending_jobs[path] = nil
+                                end,
+                            })
+                        end
+
                         return function(str)
                             local path = vim.fn.expand('%:p')
                             if vim.fn.winwidth(0) < 90 then
                                 return vim.fn.expand('%:t')
                             end
-                            
+
                             local current_time = vim.loop.now()
                             if not git_root_cache[path] or (current_time - (last_check[path] or 0) > cache_time) then
-                                -- Only check git root every 5 seconds per path
-                                git_root_cache[path] = vim.fn.systemlist('git rev-parse --show-toplevel')[1]
-                                last_check[path] = current_time
+                                schedule_update(path)
                             end
-                            
+
                             if git_root_cache[path] and path:find(git_root_cache[path], 1, true) then
                                 return path:sub(#git_root_cache[path] + 2)
                             end

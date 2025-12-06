@@ -15,7 +15,7 @@ function M.setup()
 			},
 			hover = {
 				enabled = true,
-				silent = false,
+				silent = true, -- Reduce overhead by silencing hover messages
 			},
 			signature = {
 				enabled = true,
@@ -25,7 +25,7 @@ function M.setup()
 				},
 			},
 			progress = {
-				enabled = true,
+				enabled = false, -- Disable LSP progress messages for better performance
 			},
 		},
 		presets = {
@@ -82,7 +82,7 @@ function M.setup()
 						{ find = "migrations" },
 					},
 				},
-				view = "mini",
+				view = "mini", -- Use mini view for simple messages
 			},
 			{
 				filter = {
@@ -120,9 +120,9 @@ function M.setup()
 		},
 		notify = {
 			enabled = true,
-			render = "notify",
+			render = "simple", -- Use simple render for better performance
 		},
-		throttle = 1000 / 30,
+		throttle = 1000 / 20, -- Reduce throttle for better performance
 	})
 end
 

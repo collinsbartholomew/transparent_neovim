@@ -101,6 +101,10 @@ function M.setup()
 	})
 
 	vim.api.nvim_set_hl(0, "NeoTreeWinSeparator", { fg = "#888888", bg = "NONE", bold = true })
+	
+	-- Prevent excessive auto-open on DirChanged to avoid loops
+	-- Only open neotree if explicitly requested
+	-- (DirChanged can trigger repeatedly and cause issues)
 end
 
 return M

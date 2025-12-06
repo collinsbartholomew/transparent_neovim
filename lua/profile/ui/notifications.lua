@@ -21,15 +21,6 @@ function M.setup()
         on_open = function(win)
             if not win then return end
             
-            -- Auto-dismiss notifications on buffer leave
-            vim.api.nvim_create_autocmd("BufLeave", {
-                buffer = vim.api.nvim_win_get_buf(win),
-                once = true,
-                callback = function()
-                    pcall(require("notify").dismiss, { id = win })
-                end,
-            })
-            
             -- Ensure proper window options
             pcall(function()
                 local win_opts = {

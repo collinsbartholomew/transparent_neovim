@@ -12,23 +12,18 @@ function M.setup()
     wk.setup({
         preset = 'modern',
         delay = 300,
-        popup_mappings = {
-            scroll_down = '<c-d>',
-            scroll_up = '<c-u>',
+        triggers = {
+            { "<leader>", mode = "n", desc = "leader key" },
         },
         window = {
             border = 'rounded',
             padding = { 2, 2, 2, 2 },
-        },
-        show_help = false,
-        show_keys = true,
-        win = {
             no_overlap = true,
-            padding = { 1, 1 },
-            title = true,
-            title_pos = 'center',
+            title = {
+                show = true,
+                position = 'center',
+            },
             zindex = 1000,
-            border = 'rounded',
         },
         layout = {
             height = { min = 4, max = 25 },
@@ -37,13 +32,8 @@ function M.setup()
             align = 'left',
         },
         keys = {
-            scroll_forward = '<C-d>',
-            scroll_backward = '<C-u>',
-            expand = '<CR>',
-            close = 'q',
-            next = '<C-n>',
-            prev = '<C-p>',
-            help = '?',
+            scroll_down = '<C-d>',
+            scroll_up = '<C-u>',
         },
         sort = { 'local', 'order', 'group', 'alphanum', 'mod' },
         icons = {
@@ -55,9 +45,9 @@ function M.setup()
             colors = true,
         },
         show_disabled = false,
-        disable = {
-            bt = {},
-            ft = { 'nofile', 'help' },
+        disabled = {
+            buftypes = {},
+            filetypes = { 'nofile', 'help' },
         },
     })
 end

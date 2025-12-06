@@ -76,8 +76,43 @@ function M.asm_run()
 			basename,
 			basename
 		)
-		vim.fn.system(cmd)
-		print("Compilation complete. Check output above.")
+		-- Run the pipeline asynchronously to avoid blocking Neovim
+		local job = vim.fn.jobstart({"sh", "-c", cmd}, {
+			stdout_buffered = true,
+			stderr_buffered = true,
+			on_stdout = function(_, data)
+				if data and #data > 0 then
+					for _, line in ipairs(data) do
+						if line ~= "" then
+							print(line)
+						end
+					end
+				end
+			end,
+			on_stderr = function(_, data)
+				if data and #data > 0 then
+					for _, line in ipairs(data) do
+						if line ~= "" then
+							print(line)
+						end
+					end
+				end
+			end,
+			on_exit = function(_, code)
+				if code == 0 then
+					vim.schedule(function()
+						vim.notify("Assembly build/run finished successfully", vim.log.levels.INFO)
+					end)
+				else
+					vim.schedule(function()
+						vim.notify("Assembly build/run failed (exit code " .. tostring(code) .. ")", vim.log.levels.ERROR)
+					end)
+				end
+			end,
+		})
+		if job <= 0 then
+			vim.notify("Failed to start assembly job", vim.log.levels.ERROR)
+		end
 	elseif extension == "s" or extension == "S" then
 		-- GAS compilation
 		local cmd = string.format(
@@ -89,11 +124,79 @@ function M.asm_run()
 			basename,
 			basename
 		)
-		vim.fn.system(cmd)
-		print("Compilation complete. Check output above.")
+		local job = vim.fn.jobstart({"sh", "-c", cmd}, {
+			stdout_buffered = true,
+			stderr_buffered = true,
+			on_stdout = function(_, data)
+				if data and #data > 0 then
+					for _, line in ipairs(data) do
+						if line ~= "" then
+							print(line)
+						end
+					end
+				end
+			end,
+			on_stderr = function(_, data)
+				if data and #data > 0 then
+					for _, line in ipairs(data) do
+						if line ~= "" then
+							print(line)
+						end
+					end
+				end
+			end,
+			on_exit = function(_, code)
+				if code == 0 then
+					vim.schedule(function()
+						vim.notify("Assembly build/run finished successfully", vim.log.levels.INFO)
+					end)
+				else
+					vim.schedule(function()
+						vim.notify("Assembly build/run failed (exit code " .. tostring(code) .. ")", vim.log.levels.ERROR)
+					end)
+				end
+			end,
+		})
+		if job <= 0 then
+			vim.notify("Failed to start assembly job", vim.log.levels.ERROR)
+		end
 	else
 		vim.notify("Not an assembly file", vim.log.levels.WARN)
 	end
+end
+
+-- Check if required tools for C/C++ development are installed
+function M.check_cpp_tools()
+	local tools = {
+		{ name = "clang",   cmd = "clang" },
+		{ name = "clang++", cmd = "clang++" },
+		{ name = "gcc",     cmd = "gcc" },
+		{ name = "g++",     cmd = "g++" },
+		{ name = "gdb",     cmd = "gdb" },
+		{ name = "cmake",   cmd = "cmake" },
+		{ name = "make",    cmd = "make" },
+	}
+	check_tools("C/C++", tools)
+end
+
+-- Check if required tools for Rust development are installed
+function M.check_rust_tools()
+	local tools = {
+		{ name = "rustc",  cmd = "rustc" },
+		{ name = "cargo",  cmd = "cargo" },
+		{ name = "rustfmt", cmd = "rustfmt" },
+		{ name = "clippy", cmd = "cargo-clippy" },
+	}
+	check_tools("Rust", tools)
+end
+
+-- Check if required tools for Zig development are installed
+function M.check_zig_tools()
+	local tools = {
+		{ name = "zig",    cmd = "zig" },
+		{ name = "zls",    cmd = "zls" },
+	}
+	check_tools("Zig", tools)
 end
 
 -- Reload a Lua module by clearing it from package.loaded

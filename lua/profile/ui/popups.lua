@@ -46,8 +46,9 @@ function M.setup()
 	}
 
 	for _, hl in ipairs(highlights) do
-		local hldef = vim.api.nvim_get_hl_by_name(hl, true)
-		if not hldef or not next(hldef) then
+		-- Check if highlight group exists and has attributes
+		local success, hldef = pcall(vim.api.nvim_get_hl_by_name, hl, true)
+		if not success or not hldef or not next(hldef) then
 			if hl:match("Border") then
 				vim.api.nvim_set_hl(0, hl, { link = "FloatBorder" })
 			else

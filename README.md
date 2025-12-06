@@ -4,6 +4,8 @@
 
 Transform your development workflow with a carefully crafted Neovim configuration that combines cutting-edge features with minimal startup overhead. Built for professionals who demand both power and speed.
 
+> 📢 **LATEST UPDATE** (November 17, 2025): Configuration has been comprehensively optimized and professionally improved! All performance issues fixed, deprecated APIs updated, and all features verified working. See [FINAL_REPORT.md](./FINAL_REPORT.md) for details.
+
 ---
 
 ## ✨ Key Highlights
@@ -130,8 +132,7 @@ nvim
 │   │   ├── notifications.lua       # Notification system
 │   │   ├── noice.lua               # Command UI enhancement
 │   │   ├── popups.lua              # Popup configurations
-│   │   ├── whichkey.lua            # Key mapping display
-│   │   └── indent.lua              # Indent guides
+│   │   └── whichkey.lua            # Key mapping display
 │   ├── lsp/                        # Language server configuration
 │   │   ├── lspconfig.lua           # LSP server setup (350+ lines)
 │   │   ├── capabilities.lua        # LSP capabilities setup
@@ -234,7 +235,7 @@ return M
 ### Tier 1: Fully Configured
 - **Python**: Pyright LSP, pytest, black, isort, flake8
 - **Rust**: rust-analyzer, cargo, rustfmt, clippy
-- **TypeScript/JavaScript**: ts_ls, prettier, eslint, jest
+- **TypeScript/JavaScript**: tsserver, prettier, eslint, jest
 - **C/C++**: clangd, clang-format, CMake, debugging
 - **Go**: gopls, goimports, golangci-lint
 - **Lua**: lua_ls, stylua (Neovim development)

@@ -92,19 +92,20 @@ function M.setup()
         end,
     })
 
+    -- Startup logic: show alpha only if no file is being opened
     vim.api.nvim_create_autocmd('VimEnter', {
-        desc = 'Show alpha dashboard on startup',
+        desc = 'Show alpha dashboard on startup if no file opened',
         callback = function()
-            if vim.fn.argc() > 0 then
-                return
+            -- Only show alpha if no arguments (no file being opened)
+            if vim.fn.argc() == 0 then
+                vim.schedule(function()
+                    local ok, alpha = pcall(require, 'alpha')
+                    if ok and alpha then
+                        pcall(function() alpha.start(true, alpha.default_config) end)
+                    end
+                end)
             end
-            
-            vim.schedule(function()
-                require('alpha').start(true, require('alpha').default_config)
-                vim.cmd('set showtabline=0 | set laststatus=3')
-            end)
         end,
-        nested = true,
     })
 
     vim.api.nvim_create_autocmd('User', {

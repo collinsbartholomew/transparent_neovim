@@ -14,13 +14,17 @@ function M.setup()
     end
 
     -- Load centralized adapter and configuration setups
-    local adapters_ok = pcall(require("profile.dap.adapters").setup)
-    if not adapters_ok then
+    local adapters_ok, adapters_mod = pcall(require, "profile.dap.adapters")
+    if adapters_ok and type(adapters_mod) == "table" and type(adapters_mod.setup) == "function" then
+        adapters_mod.setup()
+    else
         vim.notify("Failed to load DAP adapters", vim.log.levels.WARN)
     end
 
-    local configs_ok = pcall(require("profile.dap.configurations").setup)
-    if not configs_ok then
+    local configs_ok, configs_mod = pcall(require, "profile.dap.configurations")
+    if configs_ok and type(configs_mod) == "table" and type(configs_mod.setup) == "function" then
+        configs_mod.setup()
+    else
         vim.notify("Failed to load DAP configurations", vim.log.levels.WARN)
     end
 
@@ -55,24 +59,26 @@ function M.setup()
         dapui.close()
     end
 
-    local wk = require("which-key")
-    wk.add({
-        { "<leader>d", group = "Debug" },
-        { "<leader>db", "<cmd>lua require('dap').toggle_breakpoint()<cr>", desc = "Toggle Breakpoint" },
-        {
-            "<leader>dB",
-            "<cmd>lua require('dap').set_breakpoint(vim.fn.input('Breakpoint condition: '))<cr>",
-            desc = "Conditional Breakpoint",
-        },
-        { "<leader>dc", "<cmd>lua require('dap').continue()<cr>", desc = "Continue" },
-        { "<leader>dC", "<cmd>lua require('dap').run_to_cursor()<cr>", desc = "Run To Cursor" },
-        { "<leader>di", "<cmd>lua require('dap').step_into()<cr>", desc = "Step Into" },
-        { "<leader>do", "<cmd>lua require('dap').step_over()<cr>", desc = "Step Over" },
-        { "<leader>dO", "<cmd>lua require('dap').step_out()<cr>", desc = "Step Out" },
-        { "<leader>dr", "<cmd>lua require('dap').repl.toggle()<cr>", desc = "Toggle REPL" },
-        { "<leader>dt", "<cmd>lua require('dap').terminate()<cr>", desc = "Terminate" },
-        { "<leader>du", "<cmd>lua require('dapui').toggle()<cr>", desc = "Toggle UI" },
-    })
+    local wk_ok, wk = pcall(require, "which-key")
+    if wk_ok then
+        wk.add({
+            { "<leader>d", group = "Debug" },
+            { "<leader>db", "<cmd>lua require('dap').toggle_breakpoint()<cr>", desc = "Toggle Breakpoint" },
+            {
+                "<leader>dB",
+                "<cmd>lua require('dap').set_breakpoint(vim.fn.input('Breakpoint condition: '))<cr>",
+                desc = "Conditional Breakpoint",
+            },
+            { "<leader>dc", "<cmd>lua require('dap').continue()<cr>", desc = "Continue" },
+            { "<leader>dC", "<cmd>lua require('dap').run_to_cursor()<cr>", desc = "Run To Cursor" },
+            { "<leader>di", "<cmd>lua require('dap').step_into()<cr>", desc = "Step Into" },
+            { "<leader>do", "<cmd>lua require('dap').step_over()<cr>", desc = "Step Over" },
+            { "<leader>dO", "<cmd>lua require('dap').step_out()<cr>", desc = "Step Out" },
+            { "<leader>dr", "<cmd>lua require('dap').repl.toggle()<cr>", desc = "Toggle REPL" },
+            { "<leader>dt", "<cmd>lua require('dap').terminate()<cr>", desc = "Terminate" },
+            { "<leader>du", "<cmd>lua require('dapui').toggle()<cr>", desc = "Toggle UI" },
+        })
+    end
 
     return true
 end

@@ -36,7 +36,7 @@ function M.setup()
     -- Setup default theme
     local default_theme = "onedark"
     if theme_configs[default_theme] then
-        theme_configs[default_theme]()
+        pcall(theme_configs[default_theme])
     end
 
     -- Set modern UI elements
@@ -49,7 +49,7 @@ function M.setup()
     vim.opt.pumblend = 0
     vim.opt.laststatus = 3
 
-    vim.cmd("colorscheme " .. default_theme)
+    pcall(function() vim.cmd("colorscheme " .. default_theme) end)
 
     ----------------------------------------------------------------------
     -- Global transparency + visible borders (runs now + on ColorScheme)

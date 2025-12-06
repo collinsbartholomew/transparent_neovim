@@ -24,8 +24,12 @@ function M.setup()
         return string.format("%s [%d lines]", sub, fold_size)
     end
 
-    -- Apply custom fold text
-    vim.opt.foldtext = fold_text
+    -- export fold_text so v:lua can call it from the option expression
+    M.fold_text = fold_text
+
+    -- Apply custom fold text via an expression string that calls our function
+    -- 'foldtext' expects an expression (string), not a Lua function
+    vim.opt.foldtext = "v:lua.require('profile.core.fold').fold_text()"
 end
 
 return M

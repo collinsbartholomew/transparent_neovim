@@ -15,47 +15,10 @@ ft({
         ["*.blade.php"] = "blade",
     },
     pattern = {
-        [".*%.🔥"] = "mojo",
+        [".*%.mojo$"] = "mojo",
     },
 })
 
--- FileType-specific indentation settings (consolidated)
-local indent_settings = {
-	-- Tabs (no expansion)
-	{ pattern = { "asm", "go" },                                                                                                                                                      tabstop = 4, shiftwidth = 4, softtabstop = 4, expandtab = false },
-	-- 4 spaces
-	{ pattern = { "mojo", "python", "lua", "javascript", "typescript", "ruby", "rust", "c", "cpp", "java", "cs", "zig", "sh", "bash", "zsh", "vim", "php", "blade", "json", "toml" }, tabstop = 4, shiftwidth = 4, softtabstop = 4, expandtab = true },
-	-- 3 spaces
-	{ pattern = { "html", "xml", "xhtml", "svg", "css", "scss", "jsx", "tsx", "vue", "svelte", "astro" },                                                                                                       tabstop = 3, shiftwidth = 3, softtabstop = 3, expandtab = true },
-	-- 2 spaces
-	{ pattern = { "yaml", "yml" },                                                                                                                                                    tabstop = 2, shiftwidth = 2, softtabstop = 2, expandtab = true },
-}
-
-for _, config in ipairs(indent_settings) do
-	api.nvim_create_autocmd("FileType", {
-		group = profile_augroup,
-		pattern = config.pattern,
-		callback = function()
-			vim.opt_local.tabstop = config.tabstop
-			vim.opt_local.shiftwidth = config.shiftwidth
-			vim.opt_local.softtabstop = config.softtabstop
-			vim.opt_local.expandtab = config.expandtab
-		end,
-	})
-end
-
--- Smart wrap settings for specific filetypes
-api.nvim_create_autocmd('FileType', {
-	group = profile_augroup,
-	pattern = { 'markdown', 'txt', 'tex', 'gitcommit' },
-	callback = function()
-		vim.opt_local.wrap = true
-		vim.opt_local.linebreak = true
-		vim.opt_local.breakindent = true
-		vim.opt_local.breakindentopt = 'shift:2'
-		vim.opt_local.showbreak = '↪ '
-	end,
-})
 
 api.nvim_create_autocmd("TextYankPost", {
 	group = profile_augroup,
@@ -64,35 +27,6 @@ api.nvim_create_autocmd("TextYankPost", {
 	end,
 })
 
--- BufWritePre handlers for auto-mkdir and trailing whitespace removal
-api.nvim_create_autocmd("BufWritePre", {
-    group = profile_augroup,
-    callback = function(ev)
-        -- Remove trailing whitespace only for specific filetypes
-        local ft = vim.bo[ev.buf].filetype
-        local skip_trailing = {
-            markdown = true,
-            text = true,
-            [""] = true,
-        }
-        
-        if not skip_trailing[ft] and not vim.bo[ev.buf].binary then
-            local save_cursor = vim.fn.getpos('.')
-            pcall(vim.cmd, [[%s/\s\+$//e]])
-            vim.fn.setpos('.', save_cursor)
-        end
-        
-        -- Create directory if it doesn't exist, skip for special buffers
-        local path = vim.fn.expand("%:p")
-        if path:match("^%w+://") or path:match("^term://") then
-            return
-        end
-        local dir = vim.fn.fnamemodify(path, ":h")
-        if dir ~= "" and not vim.loop.fs_stat(dir) then
-            vim.fn.mkdir(dir, "p")
-        end
-    end,
-})
 
 api.nvim_create_autocmd("FileType", {
 	group = profile_augroup,
@@ -134,5 +68,27 @@ api.nvim_create_autocmd({ "BufLeave", "FocusLost", "InsertEnter", "WinLeave" }, 
         end
     end,
 })
+
+-- Load keymaps after which-key is available
+local function load_keymaps()
+    local ok, keymaps = pcall(require, "profile.core.keymaps")
+    if ok and keymaps and keymaps.setup then
+        keymaps.setup()
+    else
+        -- Try again in 100ms if failed
+        vim.defer_fn(load_keymaps, 100)
+    end
+end
+
+-- Trigger keymap loading
+api.nvim_create_autocmd("User", {
+    group = profile_augroup,
+    pattern = "VeryLazy",
+    callback = load_keymaps,
+})
+
+-- Fallback: try to load keymaps after 500ms if VeryLazy event hasn't fired
+vim.defer_fn(load_keymaps, 500)
+
 -- Ensure signcolumn is always visible (diagnostics configured in profile.core.diagnostics)
 vim.opt.signcolumn = "yes"
