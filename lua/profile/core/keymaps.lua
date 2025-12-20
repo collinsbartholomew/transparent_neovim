@@ -264,7 +264,6 @@ function M.setup()
         { '<leader>E', '<cmd>Neotree focus<cr>', desc = 'Focus file tree' },
         { '<leader>uu', group = 'Undo/UI' },
         { '<leader>uut', '<cmd>UndotreeToggle<cr>', desc = 'Undotree' },
-        { '<leader>uun', '<cmd>Noice<cr>', desc = 'Noice history' },
         { '<leader>uuh', '<cmd>Telescope undo<cr>', desc = 'Undo history' },
     })
 
@@ -278,9 +277,6 @@ function M.setup()
         { '<leader>xl', '<cmd>Trouble loclist toggle<cr>', desc = 'Location List' },
         { '<leader>xs', '<cmd>Trouble symbols toggle focus=false<cr>', desc = 'Symbols' },
         -- LSP keymaps moved to LSP section
-        { '<leader>nb', "<cmd>lua require('nvim-navbuddy').open()<cr>", desc = 'Navbuddy' },
-        { '<leader>cc', '<Plug>(comment_toggle_linewise)', desc = 'Comment toggle', mode = 'n' },
-        { '<leader>cc', '<Plug>(comment_toggle_linewise_visual)', desc = 'Comment toggle', mode = 'v' },
         { '<leader>h', group = 'Harpoon' },
         { '<leader>hm', "<cmd>lua require('harpoon.ui').toggle_quick_menu()<cr>", desc = 'Menu' },
         { '<leader>ha', "<cmd>lua require('harpoon.mark').add_file()<cr>", desc = 'Add file' },

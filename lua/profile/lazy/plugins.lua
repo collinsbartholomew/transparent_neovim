@@ -60,14 +60,7 @@ return {
 		end,
 	},
 
-	{
-		"rcarriga/nvim-notify",
-		lazy = false,
-		priority = 1000,
-		config = function()
-			require("profile.ui.notifications").setup()
-		end,
-	},
+
 
 	{
 		"stevearc/dressing.nvim",
@@ -159,28 +152,25 @@ return {
 		dependencies = {
 			"williamboman/mason.nvim",
 			"williamboman/mason-lspconfig.nvim",
-			"folke/neodev.nvim",
 			"b0o/schemastore.nvim",
-			"simrat39/rust-tools.nvim",
 			"mfussenegger/nvim-jdtls",
 			"p00f/clangd_extensions.nvim",
-			{
-				"jose-elias-alvarez/typescript.nvim",
-				config = function()
-					pcall(function()
-						require("avante_lib").load()
-						require("avante").setup({ provider = "claude", auto_suggestions_provider = "claude" })
-					end)
-				end,
-			},
 		},
 		config = function()
-			pcall(function() require("neodev").setup({}) end)
 			require("profile.lsp.init").setup()
 		end,
 	},
 
-	{ "folke/neodev.nvim",     ft = "lua",     lazy = true },
+	{
+		"folke/lazydev.nvim",
+		ft = "lua",
+		opts = {
+			library = {
+				{ path = "luvit-meta/library", words = { "vim%.uv" } },
+			},
+		},
+	},
+	{ "Bilal2453/luvit-meta", lazy = true },
 
 	{
 		"olimorris/codecompanion.nvim",
@@ -284,30 +274,7 @@ return {
 	},
 
 	-- === Editing Enhancements ===
-	{
-		"windwp/nvim-autopairs",
-		event = "InsertEnter",
-		config = function()
-			require("profile.editing.autopairs").setup()
-		end,
-	},
 
-	{
-		"windwp/nvim-ts-autotag",
-		ft = { "html", "javascript", "typescript", "jsx", "tsx", "vue", "svelte", "astro", "xml", "php", "blade" },
-		config = function()
-			require("profile.editing.autotag").setup()
-		end,
-	},
-
-	{
-		"numToStr/Comment.nvim",
-		event = { "BufReadPost", "BufNewFile" }, -- Changed from VeryLazy to buffer events
-		dependencies = { "JoosepAlviste/nvim-ts-context-commentstring" },
-		config = function()
-			require("profile.editing.comment").setup()
-		end,
-	},
 
 	{
 		"HiPhish/rainbow-delimiters.nvim",
@@ -321,19 +288,14 @@ return {
 	{
 		"lukas-reineke/indent-blankline.nvim",
 		main = "ibl",
-		event = { "BufReadPost", "BufNewFile" },
+		lazy = false,
+		priority = 900,
 		config = function()
 			require("profile.ui.indent").setup()
 		end,
 	},
 
-	{
-		"echasnovski/mini.nvim",
-		event = { "BufReadPost", "BufNewFile" },
-		config = function()
-			require("mini.indentscope").setup({ symbol = "│", options = { try_as_border = true } })
-		end,
-	},
+
 
 	-- === Code Intelligence ===
 	{
@@ -349,49 +311,7 @@ return {
 			require("profile.treesitter").setup()
 		end,
 	},
-	{
-		"RRethy/vim-illuminate",
-		event = "LspAttach",
-		config = function()
-			require("illuminate").configure({
-				delay = 500, -- Increased delay to reduce CPU usage
-				large_file_cutoff = 2000,
-				large_file_overrides = {
-					providers = { "lsp" },
-				},
-				min_count_to_highlight = 2,
-				filetypes_denylist = {
-					"dirvish", "fugitive", "alpha", "NvimTree",
-					"lazy", "neo-tree", "mason", "notify",
-					"toggleterm", "TelescopePrompt",
-				},
-				modes_allowlist = { "n" },
-			})
-		end,
-	},
 
-	{
-		"nvim-treesitter/nvim-treesitter-context",
-		event = { "BufReadPost", "BufNewFile" },
-		dependencies = { "nvim-treesitter/nvim-treesitter" },
-		config = function()
-			require("treesitter-context").setup({
-				enable = true,
-				max_lines = 3,
-				min_window_height = 20,
-				mode = "topline",
-				separator = "─",
-				trim_scope = "outer",
-				throttle = true,
-				patterns = {
-					default = {
-						"class", "function", "method", "for",
-						"while", "if", "switch", "case",
-					},
-				},
-			})
-		end,
-	},
 
 	{ "stevearc/aerial.nvim", 
 		cmd = "AerialToggle",
@@ -400,13 +320,7 @@ return {
 			require("profile.ui.aerial").setup()
 		end,
 	},
-	{ "SmiteshP/nvim-navic",  event = "LspAttach" },
-	{
-		"SmiteshP/nvim-navbuddy",
-		dependencies = { "MunifTanjim/nui.nvim", "SmiteshP/nvim-navic" },
-		event = "LspAttach",
-		config = true,
-	},
+
 	{
 		"ThePrimeagen/refactoring.nvim",
 		event = "BufReadPost",
@@ -463,14 +377,7 @@ return {
 	},
 
 	-- === UI & Status ===
-	{
-		"folke/noice.nvim",
-		lazy = false,
-		dependencies = { "MunifTanjim/nui.nvim", "rcarriga/nvim-notify" },
-		config = function()
-			pcall(function() require("profile.ui.noice").setup() end)
-		end,
-	},
+
 
 	{
 		"brenoprata10/nvim-highlight-colors",
@@ -610,60 +517,7 @@ return {
 	},
 
 	-- === Auto-save ===
-	{
-		"okuuva/auto-save.nvim",
-		event = { "InsertLeave", "TextChanged" },
-		config = function()
-			require("auto-save").setup({
-				enabled = true,
-				-- standard plugin option is `events`
-				events = { "BufLeave", "FocusLost", "InsertLeave", "TextChanged" },
-				write_all_buffers = false,
-				debounce_delay = 2000,
-				condition = function(buf)
-					local fn = vim.fn
 
-					-- Don't save for certain filetypes
-					local ignore_ft = {
-						"TelescopePrompt",
-						"neo-tree",
-						"dashboard",
-						"alpha",
-						"lazy",
-						"mason",
-						"lspinfo",
-						"notify",
-						"toggleterm",
-						"help",
-					}
-
-					local ft = fn.getbufvar(buf, "&filetype")
-					-- if filetype is in ignore list -> don't auto save
-					for _, v in ipairs(ignore_ft) do
-						if v == ft then
-							return false
-						end
-					end
-
-					-- Don't save if buffer isn't modifiable
-					if not fn.getbufvar(buf, "&modifiable") then
-						return false
-					end
-
-					-- Don't save if file size > 1MB (guard against unsaved/empty names)
-					local name = fn.expand("%:p")
-					if name ~= "" then
-						local size = fn.getfsize(name)
-						if size > 1024 * 1024 then
-							return false
-						end
-					end
-
-					return true
-				end,
-			})
-		end,
-	},
 
 	-- === Surround ===
 	{

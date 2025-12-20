@@ -76,3 +76,5 @@ require("lazy").setup("profile.lazy.plugins", {
         },
     },
 })
+-- Load UI configs immediately after plugins are initialized
+safe_require("profile.ui")

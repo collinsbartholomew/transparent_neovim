@@ -50,8 +50,6 @@ M.config = {
     },
     features = {
         inlay_hints = false, -- Explicitly disabled
-        illuminate = true,
-        navic = true,
         codelens = false, -- Disabled for performance
         semantic = true,
     },
@@ -64,28 +62,10 @@ local function executable(cmd)
     return vim.fn.executable(cmd) == 1
 end
 
-local function get_vue_plugin_path()
-    local ok, out = pcall(function()
-        if not executable("npm") then
-            return nil
-        end
-        local root = vim.trim(vim.fn.system("npm root -g"))
-        if vim.v.shell_error ~= 0 or root == "" then
-            return nil
-        end
-        return root .. "/@vue/typescript-plugin"
-    end)
-    if not ok or not out or out == "" then
-        return nil
-    end
-    return out
-end
-
 -- =======================
 -- Server-specific overrides
 -- =======================
 local function server_overrides(server_name)
-    local vue_path = get_vue_plugin_path()
     local overrides = {
         lua_ls = {
             settings = {
@@ -102,23 +82,12 @@ local function server_overrides(server_name)
                 },
             },
         },
-        ts_ls = (function()
-            if vue_path then
-                return {
-                    init_options = {
-                        plugins = {
-                            {
-                                name = "@vue/typescript-plugin",
-                                location = vue_path,
-                                languages = { "vue" },
-                            },
-                        },
-                    },
-                    filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact", "vue" },
-                }
-            end
-            return {}
-        end)(),
+        tsserver = {
+            settings = {
+                javascript = { inlayHints = { enabled = false } },
+                typescript = { inlayHints = { enabled = false } },
+            },
+        },
         rust_analyzer = {
             settings = {
                 ["rust-analyzer"] = {
@@ -141,34 +110,10 @@ local function server_overrides(server_name)
                 "vue",
                 "svelte",
                 "astro",
-                "mdx",
-            },
-            init_options = { userLanguages = { eelixir = "html-eex", eruby = "erb" } },
-        },
-        qmlls = {
-            filetypes = { "qml", "qmljs" },
-            root_dir = function(fname)
-                return vim.fn.getcwd()
-            end,
-            settings = {
-                qml = {
-                    import_dirs = { ".", "./imports" },
-                },
             },
         },
         clangd = {
-            cmd = {
-                "clangd",
-                "--background-index",
-                "--clang-tidy",
-                "--header-insertion=iwyu",
-                "--completion-style=detailed",
-                "--function-arg-placeholders=false",
-            },
-            init_options = {
-                fallbackFlags = { "-std=c++17", "-fPIC" },
-                clangdFileStatus = true,
-            },
+            cmd = { "clangd", "--background-index", "--clang-tidy" },
         },
     }
     return overrides[server_name] or {}
@@ -209,12 +154,6 @@ local function setup_handlers(client, bufnr)
     pcall(function()
         vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
     end)
-    if M.config.features.navic and client.capabilities.documentSymbolProvider then
-        local ok, navic = pcall(require, "nvim-navic")
-        if ok then
-            navic.attach(client, bufnr)
-        end
-    end
     -- Inlay hints are explicitly disabled
     if M.config.features.codelens and client.capabilities.codeLens then
         pcall(vim.lsp.codelens.refresh)
@@ -228,22 +167,17 @@ local function setup_handlers(client, bufnr)
             end,
         })
     end
-    if M.config.features.illuminate then
-        local ok, illuminate = pcall(require, "illuminate")
-        if ok then
-            illuminate.on_attach(client)
-        end
-    end
+
     if client.supports_method("textDocument/documentHighlight") then
         local group = vim.api.nvim_create_augroup("lsp_document_highlight_" .. bufnr, { clear = true })
-        vim.api.nvim_create_autocmd("CursorMoved", {
+        vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
             group = group,
             buffer = bufnr,
             callback = function()
                 pcall(vim.lsp.buf.document_highlight)
             end,
         })
-        vim.api.nvim_create_autocmd("CursorMovedI", {
+        vim.api.nvim_create_autocmd("CursorMoved", {
             group = group,
             buffer = bufnr,
             callback = function()
@@ -274,37 +208,33 @@ local function make_capabilities()
 end
 
 -- =======================
--- Main setup (Mason + vim.lsp.config)
+-- Main setup via mason-lspconfig
 -- =======================
 function M.setup()
     pcall(setup_ui_handlers)
     local capabilities = make_capabilities()
     vim.lsp.log.set_level(vim.log.levels.WARN)
-    
-    -- Add Motoko filetype mapping
-    vim.filetype.add({
-        extension = {
-            mo = "motoko",
-        },
-    })
-    
-    local lsp_configs = require("lspconfig.configs")
-    local mason_lspconfig_ok, mason_lspconfig = pcall(require, "mason-lspconfig")
-    if not mason_lspconfig_ok or not mason_lspconfig.setup_handlers then
-        vim.notify("mason-lspconfig not available or missing setup_handlers; skipping automatic LSP registration", vim.log.levels.WARN)
+
+    -- Require mason-lspconfig and use setup_handlers
+    local ok, mason_lspconfig = pcall(require, "mason-lspconfig")
+    if not ok or not mason_lspconfig or not mason_lspconfig.setup_handlers then
+        vim.notify("mason-lspconfig not available; cannot setup LSP servers", vim.log.levels.ERROR)
         return
     end
-    
-    mason_lspconfig.setup({ automatic_installation = true })
 
-    -- Use setup_handlers so each server is configured reliably and lazily by mason-lspconfig.
-    pcall(function()
-        mason_lspconfig.setup_handlers({
+    -- Register setup_handlers to handle each installed server
+    mason_lspconfig.setup_handlers({
         -- Default handler for any server
         function(server_name)
+            -- rust-analyzer is managed by rustaceanvim
+            if server_name == "rust_analyzer" then
+                return
+            end
+
             local lsp = require("lspconfig")
+
+            -- Skip if lspconfig doesn't recognize this server
             if not lsp[server_name] then
-                vim.notify("lspconfig does not have a server named: " .. server_name, vim.log.levels.WARN)
                 return
             end
 
@@ -312,21 +242,19 @@ function M.setup()
                 on_attach = on_attach,
                 capabilities = capabilities,
                 flags = {
-                    debounce_text_changes = 300, -- Increased debounce for better performance
+                    debounce_text_changes = 300,
                     allow_incremental_sync = true,
                 },
             }
 
             local overrides = server_overrides(server_name) or {}
-            local cfg = vim.tbl_deep_extend("force", base_config, overrides)
+            local config = vim.tbl_deep_extend("force", base_config, overrides)
 
-            -- Use lspconfig's setup to register the server. This is the standard, supported API.
             pcall(function()
-                lsp[server_name].setup(cfg)
+                lsp[server_name].setup(config)
             end)
         end,
     })
-    end)
 end
 
 return M
