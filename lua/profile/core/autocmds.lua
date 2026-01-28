@@ -1,94 +1,135 @@
-local api = vim.api
-local profile_augroup = api.nvim_create_augroup("ProfileAutocommands", { clear = true })
+local M = {}
 
--- Filetype registration
-local ft = vim.filetype.add
-ft({
-    extension = {
-        mo = "motoko",
-        mojo = "mojo",
-        asm = "asm",
-        s = "asm",
-        S = "asm",
-    },
-    filename = {
-        ["*.blade.php"] = "blade",
-    },
-    pattern = {
-        [".*%.mojo$"] = "mojo",
-    },
-})
+function M.setup()
+	local group = vim.api.nvim_create_augroup("ProfileAutocmds", { clear = true })
 
+	-- Highlight on yank
+	vim.api.nvim_create_autocmd("TextYankPost", {
+		group = group,
+		callback = function() vim.hl.on_yank({ timeout = 150 }) end,
+	})
 
-api.nvim_create_autocmd("TextYankPost", {
-	group = profile_augroup,
-	callback = function()
-		vim.hl.on_yank({ timeout = 200 })
-	end,
-})
+	-- Close with q
+	vim.api.nvim_create_autocmd("FileType", {
+		group = group,
+		pattern = { "help", "lspinfo", "man", "qf", "trouble", "telescope" },
+		callback = function(event)
+			vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = event.buf })
+		end,
+	})
 
+	-- Language-specific indentation
+	vim.api.nvim_create_autocmd("FileType", {
+		group = group,
+		pattern = { "html", "css", "javascript", "typescript", "json", "yaml", "lua" },
+		callback = function()
+			vim.opt_local.tabstop = 2
+			vim.opt_local.shiftwidth = 2
+			vim.opt_local.expandtab = true
+		end,
+	})
 
-api.nvim_create_autocmd("FileType", {
-	group = profile_augroup,
-	pattern = {
-		"help", "startuptime", "qf", "lspinfo", "man", "spectre_panel",
-		"dbui", "neotest-summary", "neotest-output", "neotest-output-panel",
-		"aerial-nav", "Trouble", "tsplayground", "notify",
-	},
-	callback = function(event)
-		vim.bo[event.buf].buflisted = false
-		vim.bo[event.buf].bufhidden = "wipe"
-		vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = event.buf, silent = true, desc = "Close window" })
-	end,
-})
+	-- Python specific
+	vim.api.nvim_create_autocmd("FileType", {
+		group = group,
+		pattern = "python",
+		callback = function()
+			vim.opt_local.tabstop = 4
+			vim.opt_local.shiftwidth = 4
+			vim.opt_local.expandtab = true
+		end,
+	})
 
-api.nvim_create_autocmd("FileType", {
-	group = profile_augroup,
-	pattern = "dap-float",
-	callback = function(event)
-		vim.keymap.set("n", "<ESC>", "<cmd>close!<cr>", { buffer = event.buf, silent = true })
-	end,
-})
+	-- Go specific
+	vim.api.nvim_create_autocmd("FileType", {
+		group = group,
+		pattern = "go",
+		callback = function()
+			vim.opt_local.tabstop = 4
+			vim.opt_local.shiftwidth = 4
+			vim.opt_local.expandtab = false
+		end,
+	})
 
--- Smart number handling
-api.nvim_create_autocmd({ "BufEnter", "FocusGained", "InsertLeave", "WinEnter" }, {
-    group = profile_augroup,
-    callback = function()
-        if vim.wo.number and vim.api.nvim_get_mode().mode ~= 'i' then
-            vim.wo.relativenumber = true
-        end
-    end,
-})
+	-- Auto-create directories
+	vim.api.nvim_create_autocmd("BufWritePre", {
+		group = group,
+		callback = function(event)
+			local file = vim.uv.fs_realpath(event.match) or event.match
+			vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
+		end,
+	})
 
-api.nvim_create_autocmd({ "BufLeave", "FocusLost", "InsertEnter", "WinLeave" }, {
-    group = profile_augroup,
-    callback = function()
-        if vim.wo.number then
-            vim.wo.relativenumber = false
-        end
-    end,
-})
+	-- Restore cursor position
+	vim.api.nvim_create_autocmd("BufReadPost", {
+		group = group,
+		callback = function()
+			local mark = vim.api.nvim_buf_get_mark(0, '"')
+			local lcount = vim.api.nvim_buf_line_count(0)
+			if mark[1] > 0 and mark[1] <= lcount then
+				pcall(vim.api.nvim_win_set_cursor, 0, mark)
+			end
+		end,
+	})
 
--- Load keymaps after which-key is available
-local function load_keymaps()
-    local ok, keymaps = pcall(require, "profile.core.keymaps")
-    if ok and keymaps and keymaps.setup then
-        keymaps.setup()
-    else
-        -- Try again in 100ms if failed
-        vim.defer_fn(load_keymaps, 100)
-    end
+	-- Check if file changed outside of vim
+	vim.api.nvim_create_autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
+		group = group,
+		command = "checktime",
+	})
+
+	-- Resize splits when window is resized
+	vim.api.nvim_create_autocmd("VimResized", {
+		group = group,
+		command = "tabdo wincmd =",
+	})
+
+	-- Disable diagnostics in node_modules
+	vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+		group = group,
+		pattern = "*/node_modules/*",
+		callback = function()
+			vim.diagnostic.disable(0)
+		end,
+	})
+
+	-- Enable spell checking for certain file types
+	vim.api.nvim_create_autocmd("FileType", {
+		group = group,
+		pattern = { "gitcommit", "markdown", "text" },
+		callback = function()
+			vim.opt_local.spell = true
+			vim.opt_local.spelllang = "en_us"
+		end,
+	})
+
+	-- Better blank line indentation
+	vim.api.nvim_create_autocmd({ "BufEnter", "InsertLeave" }, {
+		group = group,
+		callback = function()
+			-- Force redraw to show indentation guides on blank lines
+			vim.cmd("redraw")
+		end,
+	})
+
+	-- Maintain transparency after colorscheme changes
+	vim.api.nvim_create_autocmd("ColorScheme", {
+		group = group,
+		callback = function()
+			require("profile.ui.theme").apply_transparency()
+		end,
+	})
+
+	-- Terminal settings
+	vim.api.nvim_create_autocmd("TermOpen", {
+		group = group,
+		callback = function()
+			vim.opt_local.number = false
+			vim.opt_local.relativenumber = false
+			vim.opt_local.signcolumn = "no"
+			vim.cmd("startinsert")
+		end,
+	})
 end
 
--- Trigger keymap loading
-api.nvim_create_autocmd("User", {
-    group = profile_augroup,
-    pattern = "VeryLazy",
-    callback = load_keymaps,
-})
-
--- Fallback: try to load keymaps after 500ms if VeryLazy event hasn't fired
-vim.defer_fn(load_keymaps, 500)
-
--- Ensure signcolumn is always visible (diagnostics configured in profile.core.diagnostics)
-vim.opt.signcolumn = "yes"
+return M

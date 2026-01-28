@@ -1,6 +1,0 @@
-# Global shfmt configuration
-binary-next-line = true    # Binary ops like && and | go on the next line
-switch-case-indent = true  # Switch cases are indented
-space-redirects = true     # Space after redirects
-keep-padding = false       # Align with spaces
-func-next-line = true     # Function opening braces go on the next line

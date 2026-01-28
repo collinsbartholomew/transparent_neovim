@@ -1,4 +1,0 @@
-[tool.yamlfix]
-indent_mapping = 2
-indent_sequence = 2
-line_length = 100

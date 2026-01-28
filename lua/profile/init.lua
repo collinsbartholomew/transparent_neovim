@@ -1,18 +1,32 @@
--- Profile initialization - provides utilities and module loading
--- Core configuration is loaded from init.lua, this file just provides setup utilities
+local M = {}
 
--- Safe require helper to avoid hard startup failures
-local _utils_ok, _utils = pcall(require, "profile.core.utils")
-local safe_require = _utils_ok and _utils.safe_require or function(name)
-    local ok, mod_or_err = pcall(require, name)
-    if not ok then
-        vim.notify("Failed to require('" .. name .. "'): " .. tostring(mod_or_err), vim.log.levels.WARN)
-        return nil
-    end
-    return mod_or_err
+function M.setup()
+	-- Load core modules
+	require("profile.core.options").setup()
+	require("profile.core.keymaps").setup()
+	require("profile.core.autocmds").setup()
+	require("profile.core.diagnostics").setup()
+
+	-- Initialize lazy plugin manager
+	require("lazy").setup("profile.lazy.plugins", {
+		defaults = { lazy = true },
+		install = { colorscheme = { "rose-pine" } },
+		checker = { enabled = false },
+		performance = {
+			rtp = {
+				disabled_plugins = {
+					"gzip", "netrwPlugin", "tarPlugin", "tohtml", "tutor", "zipPlugin",
+					"matchit", "matchparen", "logiPat", "rrhelper", "spellfile_plugin",
+					"getscript", "getscriptPlugin", "vimball", "vimballPlugin",
+				},
+			},
+			cache = {
+				enabled = true,
+			},
+		},
+		ui = { border = "rounded" },
+		change_detection = { notify = false },
+	})
 end
 
--- Export for use by other modules
-return {
-    safe_require = safe_require,
-}
+return M

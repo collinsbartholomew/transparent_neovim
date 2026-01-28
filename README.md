@@ -1,453 +1,375 @@
-# 🚀 Professional Neovim Configuration
+# 🚀 Optimized Neovim Configuration
 
-**A Modern, High-Performance, Multi-Language Development Environment**
+**A Fast, Pure, Multi-Language Development Environment**
 
-Transform your development workflow with a carefully crafted Neovim configuration that combines cutting-edge features with minimal startup overhead. Built for professionals who demand both power and speed.
+High-performance Neovim configuration using native features and strategic plugin selection, optimized for development efficiency across 15+ languages.
 
-> 📢 **LATEST UPDATE** (November 17, 2025): Configuration has been comprehensively optimized and professionally improved! All performance issues fixed, deprecated APIs updated, and all features verified working. See [FINAL_REPORT.md](./FINAL_REPORT.md) for details.
+> ⚡ **LATEST UPDATE** (January 2026): Complete optimization with native features, extended language support, performance enhancements, and comprehensive multi-language LSP configuration.
 
 ---
 
 ## ✨ Key Highlights
 
-### 🎯 Performance First
-- **~150ms** cold startup • **~80ms** warm start
-- Lazy-loaded plugins (80+ features on-demand)
-- Optimized treesitter parsing
-- Efficient LSP client management
-- Smart autocmd organization
+### 🎯 Performance Optimized
+- **150-250ms** startup time (with bytecode cache enabled)
+- Lazy-loaded plugins by default
+- Semantic tokens disabled for speed
+- Large file detection (>500KB) disables expensive features
+- Async formatting to avoid blocking
+- Smart linting triggers
 
-### 🌐 Multi-Language Support
-Seamless development across **15+ languages**:
-- **Systems**: C/C++, Rust, Zig, Go, Assembly
-- **Web**: JavaScript, TypeScript, Vue, Svelte, HTML/CSS
-- **Data**: Python, SQL, JSON, YAML
-- **Enterprise**: Java, C#, PHP
-- **Specialized**: Qt/QML, Dart, Motoko, Mojo
-- **Config**: Lua, Bash, TOML, JSONC
+### 🌐 Comprehensive Language Support
+**Supported Languages:**
+- **Web**: JavaScript, TypeScript, JSX, TSX, HTML, CSS, Astro
+- **Systems**: Rust, Go, C/C++, Bash
+- **Backend**: Python, Ruby, PHP, Java, SQL
+- **Config**: Lua, YAML, JSON, TOML, Markdown, Docker
+- **Markup**: XML, Emmet
+- **Extras**: Scala, Kotlin, Swift (parsers available)
 
-### 🔧 Professional Development Tools
-- **LSP Integration**: 30+ language servers (auto-installed via Mason)
-- **DAP Debugging**: Multi-language debugging with codelldb/debugpy
-- **Code Quality**: Real-time linting and auto-formatting
-- **Testing**: Native test runner integration (Neotest)
-- **Git Workflow**: LazyGit + DiffView + Octo (GitHub)
-- **AI Assistance**: GitHub Copilot + local AI integration
-- **Task Automation**: Build and workflow automation (Overseer)
+**30+ LSP Servers** auto-installed via Mason
 
-### 🎨 Beautiful & Productive UI
-- **Modern Themes**: Catppuccin, Tokyonight, Nord with instant switching
-- **Smart Navigation**: Telescope fuzzy finder + file explorer (Neo-tree)
-- **Rich Status Line**: Git status, LSP diagnostics, language info
-- **Code Structure**: Symbol outline (Aerial) + breadcrumbs (Navic)
-- **Terminal**: Integrated terminal with toggle (ToggleTerm)
-- **Notifications**: Non-intrusive system with Noice
+### 🔧 Professional Development Features
+- **Native Snippets**: Neovim 0.10+ native snippet support
+- **Code Completion**: nvim-cmp with LSP, buffer, and path sources
+- **Formatting**: Auto-format on save via conform.nvim
+- **Linting**: Real-time linting with smart triggers
+- **Debugging**: Optional DAP support (commented, ready to enable)
+- **Git Integration**: LazyGit + Gitsigns
+- **Code Navigation**: Telescope fuzzy finder + Oil file explorer
+
+### 🎨 Clean & Efficient UI
+- **Theme**: Tokyo Night with transparency
+- **Status Line**: Lualine with git info and diagnostics
+- **Code Highlighting**: Treesitter with 50+ language parsers
+- **Diagnostics**: Clean, organized virtual text display
+- **Terminal**: Built-in terminal toggle
 
 ---
 
 ## 📋 Requirements
 
-### Minimum
-- **Neovim**: 0.9.0+
+### Essential
+- **Neovim**: 0.9.0+ (0.10+ recommended for native snippets)
 - **Git**: For plugin management
-- **C Compiler**: GCC/Clang (for treesitter, some plugins)
+- **Python3**: For various tools
 
 ### Recommended
-- **Node.js**: 16+ (for many LSP servers)
-- **Python**: 3.8+ (for Python development and tools)
-- **Ripgrep** (`rg`): 50x+ faster searching
-- **fd**: Fast file finding (used by telescope)
-- **Cargo**: If developing Rust
-- **Go**: If developing Go
-- **Java**: If developing Java/Kotlin
-
-### Optional Enhancements
-- **Deno**: Markdown preview, web development
-- **Docker**: Containerized development
-- **LazyGit**: Beautiful Git UI (recommended)
-- **watchexec**: File watching for hot reload (Qt development)
+- **ripgrep** (`rg`): Fast searching for telescope
+- **fd**: Fast file finding
+- **Node.js**: For some LSP servers
+- **Cargo**: For Rust development
+- **Go**: For Go development
 
 ---
 
 ## 🚀 Quick Start
 
-### Installation (30 seconds)
-
+### Installation
 ```bash
-# Backup existing config (if any)
+# Backup existing config
 mv ~/.config/nvim ~/.config/nvim.backup 2>/dev/null
 
-# Clone this configuration
+# Clone repository
 git clone https://github.com/yourusername/nvim-config ~/.config/nvim
 
-# Start Neovim (plugins auto-install on first run)
+# Start Neovim (auto-installs plugins)
 nvim
 ```
 
 ### Post-Installation
-
-1. **Wait for plugins to download** (first startup: 20-30 seconds)
-2. **Install language servers**: `:Mason` → Search and install for your languages
-3. **Verify setup**: `:checkhealth` → Ensure all systems green
-4. **Explore keybindings**: `<Space>?` → Opens which-key guide
+1. Wait for initial plugin setup (~20-30 seconds)
+2. Run `:Mason` to install language servers
+3. Run `:TSUpdate` to update Treesitter parsers
+4. Run `:checkhealth` to verify setup
 
 ### Verify Installation
-
 ```vim
-:Lazy home              " Check plugin status
-:Mason                  " Verify LSP servers
-:LspInfo                " Check active language servers
-:checkhealth            " Full system health report
+:Lazy home          " Check plugin status
+:Mason              " View installed servers
+:LspInfo            " Check active language servers
+:ConformInfo        " Check formatters
 ```
 
 ---
 
-## 📁 Architecture
-
-### Directory Structure
+## 📁 Directory Structure
 
 ```
 ~/.config/nvim/
-├── init.lua                         # Entry point & setup
-├── lazy-lock.json                  # Plugin lock file (git track this!)
-├── lua/profile/
-│   ├── init.lua                    # Configuration loader
-│   ├── lazy/
-│   │   └── plugins.lua             # Plugin specs (700+ lines)
-│   ├── core/
-│   │   ├── options.lua             # Neovim settings
-│   │   ├── keymaps.lua             # Key mappings (which-key)
-│   │   ├── autocmds.lua            # Auto-commands
-│   │   ├── diagnostics.lua         # Diagnostic configuration
-│   │   ├── fold.lua                # Folding configuration
-│   │   ├── functions.lua           # Custom Lua functions
-│   │   └── utils.lua               # Utility functions
-│   ├── ui/                         # User interface modules
-│   │   ├── theme.lua               # Theme setup & switching
-│   │   ├── statusline.lua          # Status line (lualine)
-│   │   ├── telescope.lua           # Fuzzy finder
-│   │   ├── neotree.lua             # File explorer
-│   │   ├── aerial.lua              # Code structure
-│   │   ├── enhancements.lua        # UI improvements
-│   │   ├── notifications.lua       # Notification system
-│   │   ├── noice.lua               # Command UI enhancement
-│   │   ├── popups.lua              # Popup configurations
-│   │   └── whichkey.lua            # Key mapping display
-│   ├── lsp/                        # Language server configuration
-│   │   ├── lspconfig.lua           # LSP server setup (350+ lines)
-│   │   ├── capabilities.lua        # LSP capabilities setup
-│   │   └── mason.lua               # LSP server installation
-│   ├── completion/                 # Code completion
-│   │   ├── cmp.lua                 # Completion engine (nvim-cmp)
-│   │   ├── luasnip.lua             # Snippet engine setup
-│   │   ├── init.lua                # Completion module loader
-│   │   └── snippets.lua            # Custom snippets
-│   ├── dap/                        # Debugging (DAP)
-│   │   ├── init.lua                # DAP setup
-│   │   ├── adapters.lua            # Debugger adapters
-│   │   └── configurations.lua      # Debug configurations
-│   ├── editing/                    # Editing enhancements
-│   │   ├── autopairs.lua           # Auto-bracket pairing
-│   │   ├── autotag.lua             # Auto HTML/XML tags
-│   │   ├── comment.lua             # Smart commenting
-│   │   └── rainbow.lua             # Rainbow brackets
-│   ├── tools/                      # Development tools
-│   │   ├── conform.lua             # Code formatting
-│   │   ├── lint.lua                # Code linting
-│   │   ├── neotest.lua             # Test runner
-│   │   ├── overseer.lua            # Task runner
-│   │   ├── toggleterm.lua          # Terminal integration
-│   │   ├── undotree.lua            # Undo history
-│   │   ├── trouble.lua             # Diagnostics list
-│   │   ├── spectre.lua             # Find & replace
-│   │   └── qt.lua                  # Qt/QML tools
-│   └── treesitter.lua              # Syntax parsing
-├── formatter configs/
-│   ├── .prettierrc                 # JavaScript formatter
-│   ├── stylua.toml                 # Lua formatter
-│   ├── rustfmt.toml                # Rust formatter
-│   ├── fourmolu.yaml               # Haskell formatter
-│   └── google-java-format.xml      # Java formatter
-└── pyproject.toml                  # Python project config
+├── init.lua                    # Entry point
+├── lazy-lock.json              # Plugin lock file
+├── .luarc.json                 # IDE configuration
+├── CONFIGURATION.md            # Feature documentation
+├── IMPROVEMENTS.md             # Recent improvements
+├── README.md                   # This file
+└── lua/profile/
+    ├── init.lua                # Setup loader
+    ├── core/
+    │   ├── options.lua         # Editor options (performance-tuned)
+    │   ├── keymaps.lua         # Key mappings
+    │   ├── autocmds.lua        # Auto-commands (big file handling)
+    │   └── diagnostics.lua     # Diagnostic display
+    ├── lsp/init.lua            # LSP configuration (30+ servers)
+
+---
+
+## 📋 Requirements
+
+### Essential
+- **Neovim**: 0.9.0+ (0.10+ recommended for native snippets)
+- **Git**: For plugin management
+- **Python3**: For various tools
+
+### Recommended
+- **ripgrep** (`rg`): Fast searching for telescope
+- **fd**: Fast file finding
+- **Node.js**: For some LSP servers
+- **Cargo**: For Rust development
+- **Go**: For Go development
+
+---
+
+## 🚀 Quick Start
+
+### Installation
+```bash
+# Backup existing config
+mv ~/.config/nvim ~/.config/nvim.backup 2>/dev/null
+
+# Clone repository
+git clone https://github.com/yourusername/nvim-config ~/.config/nvim
+
+# Start Neovim (auto-installs plugins)
+nvim
 ```
 
-### Module Organization
+### Post-Installation
+1. Wait for initial plugin setup (~20-30 seconds)
+2. Run `:Mason` to install language servers
+3. Run `:TSUpdate` to update Treesitter parsers
+4. Run `:checkhealth` to verify setup
 
-Each module follows a consistent pattern:
+### Verify Installation
+```vim
+:Lazy home          " Check plugin status
+:Mason              " View installed servers
+:LspInfo            " Check active language servers
+:ConformInfo        " Check formatters
+```
 
-```lua
-local M = {}
+---
 
-function M.setup()
-    -- Lazy-load plugin setup
-    local ok, plugin = pcall(require, "plugin_name")
-    if not ok then return end
-    
-    -- Configuration
-    plugin.setup({ ... })
-end
+## 📁 Directory Structure
 
-return M
+```
+~/.config/nvim/
+├── init.lua                    # Entry point
+├── lazy-lock.json              # Plugin lock file
+├── .luarc.json                 # IDE configuration
+├── CONFIGURATION.md            # Feature documentation
+├── IMPROVEMENTS.md             # Recent improvements
+├── README.md                   # This file
+└── lua/profile/
+    ├── init.lua                # Setup loader
+    ├── core/
+    │   ├── options.lua         # Editor options (performance-tuned)
+    │   ├── keymaps.lua         # Key mappings
+    │   ├── autocmds.lua        # Auto-commands (big file handling)
+    │   └── diagnostics.lua     # Diagnostic display
+    ├── lsp/init.lua            # LSP configuration (30+ servers)
+    ├── completion/init.lua     # Code completion (native snippets)
+    ├── tools/
+    │   ├── conform.lua         # Formatting (10+ formatters)
+    │   └── lint.lua            # Linting (8+ linters)
+    ├── ui/
+    │   ├── theme.lua           # Theme setup
+    │   ├── statusline.lua      # Status line
+    │   └── telescope.lua       # Fuzzy finder
+    └── lazy/plugins.lua        # Plugin specifications
 ```
 
 ---
 
 ## ⌨️ Essential Keybindings
 
-### Leader Keys
-- **Leader**: `<Space>`
-- **Local Leader**: `<Space>`
+### Navigation
+| Key | Action |
+|-----|--------|
+| `<C-h/j/k/l>` | Switch windows |
+| `<S-h/l>` | Previous/next buffer |
+| `<leader>e` | Toggle file explorer |
 
-### Quick Reference
+### Search & Files
+| Key | Action |
+|-----|--------|
+| `<leader>ff` | Find files |
+| `<leader>fg` | Live grep |
+| `<leader>fb` | Buffers |
+| `<leader>fh` | Help tags |
 
-| Category | Key | Action |
-|----------|-----|--------|
-| **Files** | `<leader>ff` | Find files |
-| | `<leader>fg` | Search text |
-| | `<leader>fb` | Switch buffer |
-| **Editor** | `<leader>e` | Toggle file tree |
-| | `<leader>tt` | Toggle terminal |
-| | `<C-h/j/k/l>` | Switch windows |
-| **LSP** | `gd` | Go to definition |
-| | `gr` | Find references |
-| | `K` | Hover documentation |
-| | `<leader>lf` | Format code |
-| | `<leader>lr` | Rename symbol |
-| **Debug** | `<leader>db` | Toggle breakpoint |
-| | `<leader>dc` | Continue |
-| | `<leader>du` | Toggle DAP UI |
-| **Git** | `<leader>gg` | LazyGit |
-| | `<leader>gc` | Commit |
-| | `<leader>gv` | Diff view |
-| **Qt Dev** | `<leader>qb` | Build |
-| | `<leader>qr` | Run |
-| | `<leader>qh` | Hot reload |
+### LSP Features
+| Key | Action |
+|-----|--------|
+| `gd` | Go to definition |
+| `gr` | Go to references |
+| `gI` | Go to implementation |
+| `K` | Hover documentation |
+| `<C-k>` | Signature help |
+| `<leader>rn` | Rename |
+| `<leader>ca` | Code action |
+| `<leader>fm` | Format buffer |
 
-### Get Help
-- `<Space>?` - Interactive keybinding guide
-- `:help vim.keymap` - Neovim keymap docs
-- `:which-key` - Show all active mappings
+### Diagnostics
+| Key | Action |
+|-----|--------|
+| `<leader>ld` | Line diagnostics |
+| `[d` | Previous diagnostic |
+| `]d` | Next diagnostic |
+| `<leader>lt` | Toggle diagnostics |
+| `<leader>lh` | Toggle inlay hints |
 
----
-
-## 🌐 Language Support
-
-### Tier 1: Fully Configured
-- **Python**: Pyright LSP, pytest, black, isort, flake8
-- **Rust**: rust-analyzer, cargo, rustfmt, clippy
-- **TypeScript/JavaScript**: tsserver, prettier, eslint, jest
-- **C/C++**: clangd, clang-format, CMake, debugging
-- **Go**: gopls, goimports, golangci-lint
-- **Lua**: lua_ls, stylua (Neovim development)
-
-### Tier 2: Production Ready
-- **Java**: jdtls, maven/gradle, debugging
-- **C#**: omnisharp, .NET integration
-- **PHP**: intelephense, laravel tools
-- **Ruby**: solargraph, rubocop
-- **Bash**: bashls, shellcheck
-- **YAML/JSON**: yamlls, jsonls with validation
-
-### Tier 3: Enhanced Support
-- **Zig**: zig fmt, language support
-- **Dart/Flutter**: dart LSP, flutter tools
-- **Qt/QML**: qmlls, clangd, CMake integration
-- **Motoko**: motoko_lsp (ICP development)
-- **Assembly**: Syntax highlighting, custom tools
-
-### Quick Add Language
-1. Language server: `:Mason` → search and install
-2. Formatter: Add to `conform.lua` formatters
-3. Linter: Add to `lint.lua` linters
-4. LSP config: Add to `lspconfig.lua` overrides
-5. Done! Auto-activates on file open
+### Other
+| Key | Action |
+|-----|--------|
+| `<leader>nh` | Clear search highlight |
+| `<leader>tt` | Toggle terminal |
+| `<leader>gg` | LazyGit |
+| `<leader>xx` | Trouble diagnostics |
+| `<leader>qs` | Restore session |
 
 ---
 
-## 🔧 Customization Guide
+## 🌐 Language Support Matrix
 
-### Change Theme
-```lua
--- lua/profile/ui/theme.lua
-local theme = "catppuccin"  -- or "tokyonight", "nord", "gruvbox"
-```
+| Language | LSP | Formatter | Linter | Treesitter |
+|----------|-----|-----------|--------|------------|
+| Python | ✅ Pyright | ✅ Black | ✅ Ruff | ✅ |
+| JavaScript | ✅ ts_ls | ✅ Prettier | ✅ ESLint | ✅ |
+| TypeScript | ✅ ts_ls | ✅ Prettier | ✅ ESLint | ✅ |
+| Lua | ✅ lua_ls | ✅ Stylua | ✅ Luacheck | ✅ |
+| Rust | ✅ rustaceanvim | ✅ Rustfmt | - | ✅ |
+| Go | ✅ Gopls | ✅ Gofmt | ✅ Golangci-lint | ✅ |
+| C/C++ | ✅ Clangd | ✅ Clang-format | ✅ Clang-check | ✅ |
+| HTML/CSS | ✅ Emmet | ✅ Prettier | - | ✅ |
+| JSON | ✅ Jsonls | ✅ Prettier | - | ✅ |
+| YAML | ✅ Yamlls | ✅ Prettier | - | ✅ |
+| Bash | ✅ Bashls | ✅ Shfmt | ✅ Shellcheck | ✅ |
+| Docker | ✅ Dockerls | - | - | ✅ |
+| Ruby | ✅ ruby_lsp | ✅ Rubocop | ✅ Rubocop | ✅ |
+| PHP | ✅ Intelephense | ✅ Php-cs-fixer | ✅ Phpstan | ✅ |
+| Java | ✅ Jdtls | ✅ google-java-format | - | ✅ |
+| C# | ✅ csharp_ls | - | - | ✅ |
+| SQL | ✅ Sqlls | ✅ Sqlfluff | - | ✅ |
+| XML | ✅ Lemminx | - | - | ✅ |
+| Markdown | ✅ Marksman | ✅ Prettier | - | ✅ |
+| TOML | ✅ Taplo | ✅ Taplo | - | ✅ |
 
-### Add Custom Keybinding
-```lua
--- lua/profile/core/keymaps.lua
-local wk = require('which-key')
-wk.add({
-    { '<leader>cc', group = 'Custom' },
-    { '<leader>cca', '<cmd>MyCommand<cr>', desc = 'My action' },
-})
-```
+---
 
-### Add Custom LSP Server
-```lua
--- lua/profile/lsp/lspconfig.lua (in server_overrides function)
-mylang = {
-    cmd = { "my-language-server" },
-    filetypes = { "mylang" },
-    root_dir = lspconfig.util.root_pattern("package.json", ".git"),
-},
-```
+## 🔧 Customization
 
-### Create Custom Snippet
-```lua
--- lua/profile/completion/snippets.lua
-local ls = require("luasnip")
-ls.add_snippets("python", {
-    ls.snippet("hello", {
-        ls.text_node("print('Hello, World!')"),
-    }),
-})
-```
+### Use a Different Theme
+Edit `lua/profile/ui/theme.lua` and change the theme name, or install new ones in `lazy/plugins.lua`
 
-### Add Custom Plugin
-```lua
--- lua/profile/lazy/plugins.lua
-{
-    "author/my-plugin",
-    cmd = "MyCommand",
-    config = function()
-        require("my_plugin").setup()
-    end,
-},
-```
+### Add a Language Server
+1. Find server name at [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md)
+2. Add to `lua/profile/lsp/init.lua` servers table
+3. Run `:Mason` to install the server
+4. Done! Automatically activates on file open
+
+### Enable DAP Debugging
+Uncomment the DAP section in `lua/profile/lazy/plugins.lua` and run `:Lazy sync`
+
+### Change Status Line Look
+Edit `lua/profile/ui/statusline.lua` lualine sections
 
 ---
 
 ## 🛠️ Troubleshooting
 
-### Plugin Issues
+### Issue: Plugins not loading
 ```vim
-" Check plugin status
-:Lazy home
-
-" Update plugins
-:Lazy update
-
-" Clear cache and reinstall
-:Lazy clean
-:Lazy sync
+:Lazy home        " Check plugin status
+:Lazy sync        " Reinstall all plugins
+:Lazy clean       " Remove broken plugins
 ```
 
-### LSP Not Working
+### Issue: LSP not connecting
 ```vim
-" Check LSP status
-:LspInfo
-
-" Install missing server
-:Mason
-
-" View LSP logs
-:LspLog
+:LspInfo          " Check active servers
+:Mason            " Install missing servers
+:LspRestart       " Restart LSP clients
 ```
 
-### Performance Issues
+### Issue: Slow startup
 ```vim
-" Profile startup
-:Lazy profile
-
-" Check slow plugins
-:Lazy debug
-
-" View startup time
-nvim --startuptime startup.log
+:Lazy profile     " See plugin load times
+nvim --startuptime startup.log  " Detailed timing
 ```
 
-### System Health
+### Issue: Formatter not working
 ```vim
-" Comprehensive health check
-:checkhealth
-
-" Check specific modules
-:checkhealth telescope
-:checkhealth mason
-:checkhealth nvim-treesitter
+:ConformInfo      " Check formatter status
+:Mason            " Install missing formatter
 ```
+
+### Issue: Missing language support
+1. Check language at `:Mason`
+2. Install server/formatter/linter
+3. Add to `lua/profile/lsp/init.lua` if new server
+4. Restart Neovim
 
 ---
 
-## 📊 Configuration Statistics
+## 📊 Performance Summary
 
 | Metric | Value |
 |--------|-------|
-| **Startup Time** | ~150ms (cold) |
-| **Warm Start** | ~80ms |
-| **Total Plugins** | 80+ (lazy-loaded) |
-| **LSP Servers** | 30+ (auto-installed) |
-| **Lines of Config** | 5000+ |
-| **Supported Languages** | 15+ |
-| **Memory (Idle)** | ~15MB |
-| **Memory (Full)** | ~100MB |
+| **Startup** | 150-250ms (cached) |
+| **First Run** | 500-800ms |
+| **Memory (Base)** | ~50MB |
+| **Memory (Full)** | ~100-150MB |
+| **Plugins (Lazy)** | 20+ loaded |
+| **LSP Servers** | 30+ available |
+| **Treesitter Parsers** | 50+ |
 
 ---
 
-## 🤝 Contributing
+## 🚀 Next Steps
 
-### Report Issues
-Please include:
-- Neovim version: `:version`
-- Operating system
-- Plugin status: `:Lazy home`
-- LSP status: `:LspInfo`
-- Error message: `:LspLog` or `:messages`
-
-### Improve Config
-1. Fork repository
-2. Create feature branch: `git checkout -b feature/improvement`
-3. Test thoroughly across languages
-4. Commit: `git commit -m 'Add feature'`
-5. Push: `git push origin feature/improvement`
-6. Submit PR with description
-
-### Style Guide
-- 4-space indentation
-- Lua-style naming (snake_case)
-- Comments for complex logic
-- Avoid breaking existing mappings
-- Test with multiple language files
+1. **Read Documentation**: Check [CONFIGURATION.md](./CONFIGURATION.md) and [IMPROVEMENTS.md](./IMPROVEMENTS.md)
+2. **Install Tools**: `:Mason` to add language servers
+3. **Configure**: Edit files in `lua/profile/` as needed
+4. **Explore**: Try out keybindings and features
 
 ---
 
-## 📚 Learning Resources
+## 📝 Tips & Tricks
 
-### Getting Started
+### Use Native Features
+- Tab completion: `<Tab>` in insert mode
+- Navigate pane: arrow keys or vim keys
+- Terminal: `:terminal` or `<leader>tt`
+- Undo tree: Use built-in `u` and `<C-r>`
+
+### Make Files Render Faster
+Automatically happens for >500KB files. Configure threshold in `lua/profile/core/autocmds.lua`
+
+### Add Snippet Support
+Snippets already configured! Define custom ones in completion setup or use plugin suggestions.
+
+### Version Control
+Track `lazy-lock.json` in git for reproducible setups
+
+---
+
+## 📚 Additional Resources
+
 - [Neovim Docs](https://neovim.io/doc/)
-- [Lua Guide](https://learnxinyminutes.com/docs/lua/)
-- [LSP Protocol](https://microsoft.github.io/language-server-protocol/)
-
-### Configuration Examples
-- [LazyVim](https://github.com/LazyVim/LazyVim)
-- [AstroNvim](https://github.com/AstroNvim/AstroNvim)
-- [Kickstart.nvim](https://github.com/nvim-lua/kickstart.nvim)
-
-### Debugging
-- [DAP Protocol](https://microsoft.github.io/debug-adapter-protocol/)
-- [Telescope Tips](https://github.com/nvim-telescope/telescope.nvim/wiki)
-
----
-
-## 📝 Changelog
-
-### Recent Changes
-- ✅ Qt/QML integration (qmlls + clangd)
-- ✅ Simplified configuration (removed boilerplate)
-- ✅ Fixed all critical errors (6 syntax issues resolved)
-- ✅ Performance optimization (2.5x startup improvement)
-- ✅ Enhanced LSP support (30+ servers)
-- ✅ DAP multi-language debugging
-
-### Version 2.1.0
-- Enhanced language support
-- Improved startup performance
-- Qt/QML professional development
-
-### Version 2.0.0
-- Complete modular refactor
-- Lazy plugin loading
-- Enhanced LSP configuration
+- [LSP Configuration](https://github.com/neovim/nvim-lspconfig)
+- [Telescope Usage](https://github.com/nvim-telescope/telescope.nvim)
+- [Treesitter Docs](https://github.com/nvim-treesitter/nvim-treesitter)
 
 ---
 
@@ -457,28 +379,18 @@ MIT License - See LICENSE file for details
 
 ---
 
-## 🙏 Credits
+## 🙏 Credit
 
-**Built with** ❤️ using:
-- [Neovim](https://neovim.io/) - The extensible editor
-- [lazy.nvim](https://github.com/folke/lazy.nvim) - Plugin manager
-- [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig) - LSP configs
-- [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) - Fuzzy finder
-- [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) - Parsing
-
-**Inspired by**: LazyVim, AstroNvim, Kickstart.nvim
+Built with:
+- [Neovim](https://neovim.io/)
+- [lazy.nvim](https://github.com/folke/lazy.nvim)
+- [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
+- [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim)
+- [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter)
+- And 15+ other essential plugins
 
 ---
 
-## 🚀 Get Started Now!
-
-```bash
-git clone https://github.com/yourusername/nvim-config ~/.config/nvim
-nvim
-:Lazy sync
-:Mason
-```
-
 **Happy coding!** 🎉
 
-For issues, questions, or contributions: [GitHub Issues](https://github.com/yourusername/nvim-config/issues)
+For issues or questions: [Open an issue](https://github.com/yourusername/nvim-config/issues)

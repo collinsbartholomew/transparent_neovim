@@ -1,50 +1,46 @@
 local M = {}
 
 function M.setup()
-	local telescope = require("telescope")
-	telescope.setup({
+	require("telescope").setup({
 		defaults = {
-			mappings = {
-				i = { ["<C-h>"] = "which_key" },
-			},
 			file_ignore_patterns = {
 				"node_modules/",
 				".git/",
 				"target/",
 				"build/",
-				"%.class",
+				"dist/",
+				"__pycache__/",
 				".venv",
 				"vendor/",
-				"dist/",
-				"%.o$",
-			},
-			layout_strategy = "horizontal",
-			layout_config = {
-				horizontal = {
-					preview_width = 0.6,
-				},
-			},
-			vimgrep_arguments = {
-				"rg",
-				"--color=never",
-				"--no-heading",
-				"--with-filename",
-				"--line-number",
-				"--column",
-				"--smart-case",
-				"--max-count=500",
+				"lazy-lock.json",
 			},
 		},
 		pickers = {
 			find_files = {
-				find_command = { "fd", "--type", "f", "--strip-cwd-prefix" },
+				find_command = { "fd", "--type", "f", "--hidden", "--exclude", ".git" },
 				hidden = true,
+			},
+			buffers = {
+				theme = "dropdown",
+				previewer = false,
+				initial_mode = "normal",
+				mappings = {
+					i = { ["<C-d>"] = "delete_buffer" },
+					n = { ["dd"] = "delete_buffer" },
+				},
+			},
+		},
+		extensions = {
+			fzf = {
+				fuzzy = true,
+				override_generic_sorter = true,
+				override_file_sorter = true,
+				case_mode = "smart_case",
 			},
 		},
 	})
-	pcall(telescope.load_extension, "harpoon")
-	pcall(telescope.load_extension, "undo")
-	pcall(telescope.load_extension, "colorscheme")
+
+	require("telescope").load_extension("fzf")
 end
 
 return M

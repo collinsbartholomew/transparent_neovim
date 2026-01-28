@@ -1,0 +1,14 @@
+{
+  "runtime": {
+    "version": "LuaJIT",
+    "path": ["?.lua", "?/init.lua"]
+  },
+  "diagnostics": {
+    "globals": ["vim"],
+    "disable": ["unused-local", "lowercase-global"]
+  },
+  "workspace": {
+    "checkThirdParty": false,
+    "ignoreDir": [".git", "node_modules", ".venv"]
+  }
+}
